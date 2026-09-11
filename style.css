@@ -1,0 +1,636 @@
+/* ====================================================================================
+=========================index.html ===================================================*/
+ 
+ :root{
+    --bone:#EDE7DB;
+    --bone-light:#F6F2E8;
+    --ink:#201E1A;
+    --ink-soft:#4A463E;
+    --rust:#77836A;
+    --rust-dark:#7E3B23;
+    --sage:#77836A;
+    --line:#CBBFA8;
+    --line-soft:#DCD4C0;
+    --rustOpa:#77836a92;
+    --boneOpa:#f8f8f82a;
+
+
+
+  }
+
+  *{ box-sizing:border-box; }
+
+  html{ -webkit-font-smoothing:antialiased; }
+
+  body{
+  margin:0;
+  color:var(--bone-light);
+  font-family:'Archivo', sans-serif;
+}
+
+  .bg-fixed{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:-1;
+  overflow:hidden;
+  pointer-events:none;
+  background:#191918;
+}
+
+.bg-fixed video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center;
+  filter:blur(0.5px);
+  transform:scale(1.05);
+}
+.bg-fixed::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg, rgba(25,25,24,0.45) 0%, rgba(25,25,24,0.55) 50%, rgba(25,25,24,0.8) 100%);
+}
+
+  a{ color:inherit; }
+
+  /* ===================== NAV ============= */
+
+  .nav{
+    max-width:1200px;
+    margin:0 auto;
+    padding:2rem 2rem 0;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  .nav-mark{
+    font-family:'Piazzolla', serif;
+    font-size:1.35rem;
+    font-weight:500;
+    letter-spacing:-0.01em;
+    text-decoration:none;
+    color: var(--bone-light);
+  }
+
+  .nav-links{
+    display:flex;
+    align-items:center;
+    gap:2.25rem;
+    list-style:none;
+    margin:0;
+    padding:0;
+  }
+
+  .nav-links a{
+    text-decoration:none;
+    font-size:1rem; 
+    color: var(--bone-light); /* color links navbar*/
+    transition:color 0.2s ease;
+  }
+
+  .nav-links a:hover{ color: var(--bone-light); }
+
+  .nav-cta{
+  display:inline-flex;
+  align-items:center;
+  padding:0.6rem 1.3rem;
+  background:var(--rust);
+  color:var(--bone-light);
+  border-radius:3px;
+  font-size:0.9rem;
+  font-weight:500;
+  text-decoration:none;
+  transition:background 0.2s ease;
+}
+
+.nav-cta:hover{ background:var(--rust-dark); }
+
+  .nav-cta:hover{ background:var(--rust-dark); }
+
+  @media (max-width:720px){
+    .nav-links{ display:none; }
+  }
+
+
+  /* ====================== HERO ================= */
+
+  .hero{
+    max-width:1200px;
+    margin:0 auto;
+    padding:7rem 2rem 5rem;
+    display:grid;
+    grid-template-columns:1fr;
+    align-items:center;
+  }
+
+  .hero-copy h1{ /*ejericio con precision*/
+    font-family:'Piazzolla', serif;
+    font-weight:500;
+    font-size:clamp(2.6rem, 4.4vw, 3.85rem);
+    line-height:1.06;
+    letter-spacing:-0.015em;
+    margin:0 0 1.5rem;
+    color: var(--bone-light); 
+    max-width:11ch;
+    margin-top: 26px;
+  }
+
+  .hero-copy p{ /*clases de reformer en 50 minutos...*/
+    font-size:1.08rem;
+    line-height:1.65;
+    color:var(--bone);
+    max-width:38ch;
+    margin:0 0 2.25rem;
+  }
+
+  .hero-actions{ /*linea divisora*/
+  display:flex;
+  align-items:center;
+  gap:1.75rem;
+  flex-wrap:wrap;
+  padding-top:2.75rem;
+  border-top:1px solid var(--line);
+  max-width:440px;
+} 
+
+  .hero-side{
+  display:flex;
+  flex-direction:column;
+  gap:2rem;
+}
+
+  .btn-primary{ /* boton reservar clase*/
+    display:inline-flex;
+    align-items:center;
+    padding:0.95rem 1.9rem;
+    background:var(--rust);
+    color:var(--bone-light); 
+    text-decoration:none;
+    border-radius:3px;
+    font-size:0.98rem;
+    font-weight:600;
+    transition:background 0.2s ease, transform 0.2s ease;
+  }
+
+  .btn-primary:hover{ /* accion boton reservar clase*/
+    background:var(--rust-dark);
+    transform:translateY(-1px);
+  }
+
+  .btn-secondary{ /* boton ver horarios disponibles*/
+    display:inline-flex;
+    align-items:center;
+    padding:0.95rem 1.9rem;
+    background:var(--bone-light);
+    color:var(--rust); 
+    text-decoration:none;
+    border-radius:3px;
+    font-size:0.98rem;
+    font-weight:600;
+    transition:background 0.2s ease, transform 0.2s ease;
+  }
+
+  .btn-secondary:hover{ opacity:0.65; } /*acción boton ver horarios */
+
+ .hero-meta{
+    display:flex;
+    gap:2.5rem;
+}
+
+  .hero-meta div{ display:flex; flex-direction:column; gap:0.3rem; }
+
+ .hero-meta .num{ /*numeros*/
+    font-family:'Piazzolla', serif;
+    font-size:1.7rem;
+    font-weight:500;
+    color:var(--bone-light);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.695);
+}
+
+  .hero-meta .lbl{ /*camas x clase, ' por clase, dias a la semana*/
+    font-size:0.82rem;
+
+    color:var(--bone);
+  }
+
+  .hero{ position:relative; }
+
+.scroll-hint{
+  position:absolute;
+  bottom:1.5rem;
+  left:50%;
+  transform:translateX(-50%);
+  width:1px;
+  height:2.5rem;
+  overflow:hidden;
+}
+
+.scroll-hint span{
+  display:block;
+  width:100%;
+  height:100%;
+  background:rgba(246,242,232,0.5);
+  animation:scrollHint 1.8s ease-in-out infinite;
+}
+
+@keyframes scrollHint{
+  0%{ transform:translateY(-100%); }
+  100%{ transform:translateY(100%); }
+}
+  /* ============= AGENDA (turnos de la semana) ============= */
+
+  .agenda{ /*card turnos de esta semana*/
+    padding:4.5rem 2rem;
+  }
+
+  .agenda-inner{
+    max-width:1200px;
+    margin:0 auto;
+  }
+
+  .agenda-header{
+    margin-bottom:2.5rem;
+  }
+
+  .agenda-header h2{ /*texto turnos de esta semana*/
+    font-family:'Piazzolla', serif;
+    font-weight:500;
+    font-size:1.8rem;
+    color:var(--bone-light);
+    margin:0 0 0.5rem;
+  }
+
+  .agenda-header p{ /*textos de lunes a sabados...*/
+    font-size:0.95rem;
+    color:rgba(246,242,232,0.6);
+    margin:0;
+  }
+
+  .agenda-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+    gap:1.5rem;
+  }
+
+  .agenda-day{
+    background:var(--sage);
+    border:1px solid rgba(246,242,232,0.12);
+    border-radius:4px;
+    padding:1.4rem;
+  }
+
+  .agenda-day h3{
+    font-family:'Piazzolla', serif;
+    font-weight:500;
+    font-size:1.05rem;
+    color:var(--bone-light);
+    margin:0 0 1rem;
+  }
+
+  .schedule-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0.5rem 0;
+    border-top:1px solid rgba(246,242,232,0.1);
+    font-size:0.9rem;
+  }
+
+  .schedule-row:first-of-type{ border-top:none; }
+
+  .schedule-row .time{
+    font-variant-numeric:tabular-nums;
+    color:rgba(246,242,232,0.8);
+  }
+
+  .schedule-row .spots{
+    font-size:0.78rem;
+    font-weight:600;
+    padding:0.28rem 0.65rem;
+    border-radius:2px;
+    white-space:nowrap;
+  }
+
+  .spots.open{ background:rgba(119,131,106,0.35); color:#C8D2BC; }
+  .spots.low{ background:rgba(156,74,46,0.35); color:#E9B8A4; }
+  .spots.full{ background:rgba(246,242,232,0.1); color:rgba(246,242,232,0.5); }
+
+  @media (max-width:480px){
+    .agenda{ padding:3rem 1.25rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; }
+  }
+
+  a:focus-visible, button:focus-visible{
+    outline:2px solid var(--rust);
+    outline-offset:3px;
+  }
+
+
+  /* -------------------------------- FOOTER ------------------------------*/
+
+  *{ box-sizing:border-box; }
+
+  body{ margin:0; font-family:'Archivo', sans-serif; }
+
+  .site-footer{
+  background:rgba(246,242,232,0.08);
+    backdrop-filter:blur(10px);
+   -webkit-backdrop-filter:blur(10px);
+    padding:4rem 2rem 2rem;
+    margin-top:4rem;
+  }
+  
+
+  .footer-inner{
+    max-width:1200px;
+    margin:0 auto;
+  }
+
+ .footer-top{
+    display:grid;
+    grid-template-columns:1.2fr 1fr 1fr;
+    gap:3rem;
+    padding-bottom:3rem;
+}
+
+  .footer-mark{
+    font-family:'Piazzolla', serif;
+    font-weight:500;
+    font-size:1.3rem;
+    color:var(--bone-light);
+    margin:0 0 0.9rem;
+  }
+
+  .footer-top p{
+    font-size:0.92rem;
+    line-height:1.65;
+    max-width:32ch;
+    margin:0;
+  }
+
+  .footer-col h3{
+    font-size:0.85rem;
+    font-weight:600;
+    color:var(--bone-light);
+    margin:0 0 1.1rem;
+  }
+
+  .footer-col ul{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:0.7rem;
+  }
+
+  .footer-col a{
+    color:rgba(246,242,232,0.7);
+    text-decoration:none;
+    font-size:0.92rem;
+    transition:color 0.2s ease;
+  }
+
+  .footer-col a:hover{ color:var(--rust); }
+
+  .footer-bottom{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:1rem;
+    padding-top:1.75rem;
+    border-top:1px solid rgba(246,242,232,0.14);
+  }
+
+  .footer-bottom p{
+    margin:0;
+    font-size:0.82rem;
+    color:rgba(246,242,232,0.45);
+  }
+
+  .footer-social{
+    display:flex;
+    gap:1.4rem;
+  }
+
+  .footer-social a{
+    color:rgba(246,242,232,0.7);
+    text-decoration:none;
+    font-size:0.85rem;
+    transition:color 0.2s ease;
+  }
+
+  .footer-social a:hover{ color:var(--sage); }
+
+ @media (max-width:760px){
+    .footer-bottom{ flex-direction:column; align-items:flex-start; }
+
+    .footer-top{
+        gap:1.2rem;
+        padding-bottom:2rem;
+    }
+
+    .footer-mark{ font-size:1.05rem; }
+    .footer-top p{ font-size:0.8rem; line-height:1.5; }
+    .footer-col h3{ font-size:0.75rem; margin-bottom:0.7rem; }
+    .footer-col a{ font-size:0.78rem; }
+    .footer-col ul{ gap:0.45rem; }
+}
+
+  a:focus-visible{
+    outline:2px solid var(--rust);
+    outline-offset:3px;
+  }
+
+
+/*===================================================================================
+===========================clases.html======================================================*/
+
+.page-header{
+  max-width:1200px;
+  margin:0 auto;
+  padding:5rem 2rem 3rem;
+  text-align:center;
+}
+
+.page-header h1{ /*texto clases reforner*/
+  font-family:'Piazzolla', serif; /*fuente*/
+  font-weight:500; /*grosor*/
+  font-size:clamp(2.2rem, 4vw, 3.2rem); /*tamaño*/
+  color:var(--bone-light); /*color*/
+  margin:0 0 1rem;
+}
+
+.page-header p{ /*texto un meteodo de bajo impacto...*/
+  font-size:1.05rem;
+  color:var(--bone);
+  max-width:48ch;
+  margin:0 auto;
+}
+
+/* ---------------------------- MÉTODO ------------------------- */
+
+.method-section{
+  padding:1rem 2rem 2rem;
+}
+
+.method-inner{
+  max-width:700px;
+  margin:0 auto;
+  text-align:center;
+}
+
+.method-inner h2{ /*texto: sobre el metodo*/
+  font-family:'Piazzolla', serif;
+  font-weight:500;
+  font-size:1.6rem;
+  color:var(--bone-light);
+  margin:0 0 1.2rem;
+}
+
+.method-inner p{ /*texto: el reformer pilates trabaja todo el cuerpo...*/
+  font-size:1rem;
+  line-height:1.7;
+  color:var(--bone);
+}
+
+/* --------------------------------- BENEFICIOS --------------------------- */
+
+.benefits-section{
+  padding: 1rem 2rem 2rem; /*separacion abajo, costado izquiero y derecho*/
+}
+
+.benefits-inner{
+  max-width:1200px;
+  margin:0 auto;
+}
+
+.benefits-inner h2{ /* texto: beneficios*/
+  font-family:'Piazzolla', serif;
+  font-weight:500;
+  font-size:1.6rem;
+  color:var(--bone-light);
+  text-align:center;
+  margin:0 0 2.5rem;
+}
+
+.benefits-grid{ /*distribución cards*/
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+  gap:1.5rem;
+}
+
+.benefit-card{ /*cards de beneficios*/
+  background: var(--rustOpa); /*color card beneficios*/
+  border:1px solid rgba(246,242,232,0.14);
+  border-radius:4px;
+  padding:1.6rem;
+  text-align:center;
+}
+
+.benefit-card h3{ /*titulos cards*/
+  font-family:'Piazzolla', serif;
+  font-weight:500;
+  font-size:1.05rem;
+  color:var(--bone-light);
+  margin:0 0 0.7rem;
+}
+
+.benefit-card p{ /*texto dentro de las cards*/
+  font-size:0.9rem;
+  line-height:1.6;
+  color:var(--bone);
+  margin:0;
+}
+
+/* ---------------------------- HORARIOS (clases.html) ------------------------- */
+
+.schedule-section{ /*posición*/
+  padding:2rem 2rem 4rem;
+  text-align:center;
+}
+
+.schedule-inner{ 
+  max-width:600px;
+  margin:0 auto;
+}
+
+.schedule-inner h2{ /*titulo: turnos y horario*/
+  font-family:'Piazzolla', serif;
+  font-weight:500;
+  font-size:1.6rem;
+  color:var(--bone-light);
+  margin:0 0 1rem;
+}
+
+.schedule-inner p{ /*texto: clases de 50', de lunes a sábados...*/
+  font-size:1rem;
+  color:var(--bone);
+  margin:0 0 1.8rem;
+}
+
+.trial-badge{ /*te regalamos la primera clase de prueba*/
+  display:inline-block;
+  background: var(--bone-light);
+  border:1px solid var(--sage);
+  color:var(--sage);
+  font-size:0.75rem;
+  font-weight:600;
+  letter-spacing:0.03em;
+  text-transform:uppercase;
+  padding:0.35rem 0.9rem;
+  border-radius:20px;
+  margin-top:1.2rem;
+}
+
+/* ---------------------- INFO MÉTODOS DE PAGO -------------------------- */
+
+.payment-section{ /*posición*/
+  padding:2rem 2rem 6rem;
+  text-align:center;
+}
+
+.payment-inner{
+  max-width:700px;
+  margin:0 auto;
+}
+
+.payment-inner h2{ /*titulo: metodos de pago*/
+  font-family:'Piazzolla', serif;
+  font-weight:500;
+  font-size:1.6rem;
+  color:var(--bone-light);
+  margin:0 0 1rem;
+}
+
+.payment-inner p{ /*texto: los pagos se realizan en el local...*/
+  font-size:0.95rem;
+  color:var(--bone);
+  margin:0 0 2rem;
+}
+
+.payment-grid{ /*distribución cards metodos de pago*/
+  display:flex;
+  justify-content:center;
+  gap:1rem;
+  flex-wrap:wrap;
+}
+
+.payment-item{ /*cards metodos de pago*/
+  background: var(--rustOpa); /*color*/
+  border:1px solid rgba(246,242,232,0.14); /*borde cards*/
+  border-radius:3px;
+  padding:0.8rem 1.4rem;
+  font-size:0.9rem; /*tamaño de texto*/
+  color:var(--bone-light); /*color fuente dentro de card*/
+}

@@ -1,0 +1,130 @@
+:root{
+    --bone:#EDE7DB;
+    --bone-light:#F6F2E8;
+    --ink:#201E1A;
+    --ink-soft:#4A463E;
+    --rust:#9C4A2E;
+    --sage:#77836A;
+    --line:#CBBFA8;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    background:var(--bone);
+    color:var(--ink);
+    font-family:'Archivo', sans-serif;
+  }
+  
+  .bg-fixed.bg-fixed-nosotros{
+    background-image:
+        linear-gradient(rgba(159, 157, 155, 0.65), rgba(0, 0, 0, 0.554)),
+        url('img/hero1.png');
+}
+
+  .nosotras{
+    max-width:1200px;
+    margin:0 auto;
+    padding:6rem 2rem;
+  }
+
+  .nosotras-heading{ /*sobre el estudio*/
+    font-size:0.95rem;
+    color:var(--bone-light);
+    margin:0 0 3rem;
+  }
+
+  .nosotras-grid{
+    display:grid;
+    grid-template-columns:1.3fr 1fr;
+    gap:4.5rem;
+    align-items:start;
+  }
+
+  .nosotras-statement{ /* un espacio para trabajar...*/
+    font-family:'Piazzolla', serif;
+    font-style:italic;
+    font-weight:400;
+    font-size: 2rem;
+    line-height:1.32;
+    letter-spacing:-0.01em;
+    color:var(--bone-light);
+    margin:0;
+    max-width:16ch;
+    margin-top: 35px;
+  }
+
+  .nosotras-side{ /*linea*/
+    padding-bottom:0.1rem;
+    border-bottom:1px solid var(--line);
+}
+
+  .nosotras-side p{ /* soy maría fernandez, instructora...*/
+    font-size: 1.2rem;
+    font-family:'Piazzolla', serif;
+    line-height:1.7;
+    color:var(--bone-light);
+    max-width:38ch;
+    margin:0 0 0.8rem;
+  }
+
+  .instructora{
+    display:flex;
+    flex-direction:column;
+    gap:0.35rem;
+  }
+
+  .instructora .nombre{
+    font-family:'Piazzolla', serif;
+    font-weight:500;
+    font-size:1.15rem;
+    color:var(--bone);
+  }
+
+  .about-bio p{
+  margin:0 0 1.3rem;
+}
+
+.about-bio p:last-child{
+  margin-bottom:0;
+}
+
+  @media (max-width:800px){
+    .nosotras{ padding:4.5rem 1.5rem; }
+    .nosotras-grid{ grid-template-columns:1fr; gap:6rem; }
+    .nosotras-statement{ max-width:none; }
+  }
+
+   
+  /* ----------------------------Ubicación ---------------------------------*/
+
+.location-section{
+  padding:2rem 2rem 6rem;
+  text-align:center;
+}
+
+.location-inner{
+  max-width:800px;
+  margin:0 auto;
+}
+
+.location-inner h2{
+  font-family:'Piazzolla', serif;
+  font-weight:500;
+  font-size:1.6rem;
+  color:var(--bone-light);
+  margin:0 0 0.6rem;
+}
+
+.location-inner p{
+  font-size:0.95rem;
+  color:var(--bone);
+  margin:0 0 1.8rem;
+}
+
+.location-map{
+  border-radius:30px;
+  overflow:hidden;
+  border:1px solid rgba(246,242,232,0.14);
+}
