@@ -21,7 +21,6 @@
 
   <!---------------------------NAVBAR---------------------------------------->
 
-
   <nav class="nav">
     <a href="#" class="nav-mark">Espacio Pilates</a>
     <ul class="nav-links">
@@ -29,44 +28,39 @@
       <li><a href="index.html#agenda">Turnos</a></li>
       <li><a href="conocenos.html">Conocenos</a></li>
     </ul>
-    <a href="#" class="nav-cta">Reservar</a>
+    <a href="#" class="nav-cta open-reserva-modal">Reservar</a>
   </nav>
-  
-  <!------------------------------------------------------------------->
+
+  <!------------------------------------------------------------------------>
 
   <section class="hero">
- 
-    
+
     <div class="hero-copy">
       <h1>Ejercicio con precisión</h1>
       <p>Clases de reformer de 50 minutos, cupo de ocho personas por turno. De lunes a sábado, de 11 a 19 horas.</p>
     </div>
 
-     <div class="hero-side">
-  <div class="hero-meta">
-    <div>
-      <span class="num">8</span>
-      <span class="lbl">camas por clase</span>
+    <div class="hero-side">
+      <div class="hero-meta">
+        <div>
+          <span class="num">8</span>
+          <span class="lbl">camas por clase</span>
+        </div>
+        <div>
+          <span class="num">50</span>
+          <span class="lbl">minutos por turno</span>
+        </div>
+        <div>
+          <span class="num">6</span>
+          <span class="lbl">días a la semana</span>
+        </div>
+      </div>
     </div>
-    <div>
-      <span class="num">50</span>
-      <span class="lbl">minutos por turno</span>
-    </div>
-    <div>
-      <span class="num">6</span>
-      <span class="lbl">días a la semana</span>
-    </div>
-  </div>
-
-  <div class="hero-actions">
-    <a href="#agenda" class="btn-primary">Reservar clase</a>
-  </div>
-</div>
   </section>
 
   <a href="#agenda" class="scroll-hint" aria-label="Ver turnos disponibles">
-  <span></span>
-</a>
+    <span></span>
+  </a>
 
   <section class="agenda" id="agenda">
     <div class="agenda-inner">
@@ -75,36 +69,21 @@
         <p>De lunes a sábado, de 11 a 19 horas. Cupo de 8 personas por turno.</p>
       </div>
 
-      <div class="agenda-grid">
-        <div class="agenda-day">
-          <h3>Lunes</h3>
-          <div class="schedule-row">
-            <span class="time">11:00</span>
-            <span class="spots open">3 lugares</span>
-          </div>
-        </div>
+      <div class="agenda-tabs" id="agenda-tabs">
+        <!-- Las pestañas de días se generan dinámicamente -->
+      </div>
 
-        <div class="agenda-day">
-          <h3>Martes</h3>
-          <div class="schedule-row">
-            <span class="time">12:00</span>
-            <span class="spots low">1 lugar</span>
-          </div>
-        </div>
+      <div class="agenda-horarios" id="agenda-horarios">
+        <!-- Los horarios del día seleccionado se generan dinámicamente -->
+      </div>
 
-        <div class="agenda-day">
-          <h3>Miércoles</h3>
-          <div class="schedule-row">
-            <span class="time">18:00</span>
-            <span class="spots full">Completo</span>
-          </div>
-        </div>
+      <div class="hero-actions">
+        <a href="#" class="btn-primary open-reserva-modal">Reservar clase</a>
       </div>
     </div>
   </section>
 
   <!-------------------------------------FOOTER ------------------------>
-
 
   <footer class="site-footer">
     <div class="footer-inner">
@@ -131,8 +110,7 @@
             <li><a href="https://wa.me/598XXXXXXXX" target="_blank">WhatsApp</a></li>
             <li><a href="mailto:hola@espaciopilates.uy">Mail</a></li>
             <li><a href="https://instagram.com/espaciopilatesssss" target="_blank">Instagram</a></li>
-             <li><a href="conocenos.html#ubicacion">¿Dónde nos ubicamos?</a></li>
-
+            <li><a href="conocenos.html#ubicacion">¿Dónde nos ubicamos?</a></li>
           </ul>
         </div>
       </div>
@@ -143,8 +121,52 @@
     </div>
   </footer>
 
-  <!------------------------------------------------------------->
+  <!-------------------------TURNOS DE ESTA SEMANA---------------------------------->
 
+
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-box">
+      <button class="modal-close" id="modal-close" aria-label="Cerrar">&times;</button>
+
+      <div class="modal-step" id="modal-step-turnos">
+  <h2>Elegí tu turno</h2>
+  <div class="modal-tabs" id="modal-tabs">
+    <!-- Pestañas de días, generadas dinámicamente -->
+  </div>
+  <div class="modal-turnos-list" id="modal-turnos-list">
+    <!-- Horarios del día seleccionado -->
+  </div>
+</div>
+
+      <div class="modal-step" id="modal-step-form" style="display:none;">
+        <h2>Confirmá tu reserva</h2>
+        <p class="modal-turno-elegido" id="modal-turno-elegido"></p>
+
+        <form id="reserva-form">
+          <div class="modal-form-row">
+            <input type="text" id="input-nombre" placeholder="Nombre" required>
+            <input type="text" id="input-apellido" placeholder="Apellido" required>
+          </div>
+          <input type="email" id="input-email" placeholder="Email" required>
+          <input type="tel" id="input-telefono" placeholder="Teléfono" required>
+          <button type="button" class="btn-secondary" id="btn-volver-turnos">Atrás</button>
+          <button type="submit" class="btn-primary">Confirmar reserva</button>
+        </form>
+      </div>
+
+      <div class="modal-step" id="modal-step-exito" style="display:none;">
+        <h2>¡Reserva confirmada!</h2>
+        <p>Te esperamos en tu clase. Te llegará la confirmación por email o WhatsApp.</p>
+        <button type="button" class="btn-primary" id="btn-cerrar-exito">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="agenda.js"></script>
 
 </body>
 </html>
+
+
+<!---------link archivo google sheets para ver reservas: 
+https://docs.google.com/spreadsheets/d/12SudjZbBVsFz2ZkdhA8JsCXthdH2wxQzzVcoLCSbZzM/edit?gid=0#gid=0 -->

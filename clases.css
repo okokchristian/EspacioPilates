@@ -1,0 +1,182 @@
+/* ======================ESTILO DE TODO LO QUE SE VE EN CLASES.HTML==========================*/
+
+
+.page-header{
+  max-width:1200px;
+  margin:0 auto;
+  padding:5rem 2rem 3rem;
+  text-align:center;
+}
+
+.page-header h1{ /*texto clases reforner*/
+  font-family:'Piazzolla', serif; /*fuente*/
+  font-weight:500; /*grosor*/
+  font-size:clamp(2.2rem, 4vw, 3.2rem); /*tamaño*/
+  color:var(--bone-light); /*color*/
+  margin:0 0 1rem;
+}
+
+.page-header p{ /*texto un meteodo de bajo impacto...*/
+  font-size:1.05rem;
+  color:var(--bone);
+  max-width:48ch;
+  margin:0 auto;
+}
+
+/* ---------------------------- MÉTODO ------------------------- */
+
+.method-section{
+  padding:1rem 2rem 2rem;
+}
+
+.method-inner{
+  max-width:700px;
+  margin:0 auto;
+  text-align:center;
+}
+
+.method-inner h2{ /*texto: sobre el metodo*/
+  font-family:'Piazzolla', serif;
+  font-weight:500;
+  font-size:1.6rem;
+  color:var(--bone-light);
+  margin:0 0 1.2rem;
+}
+
+.method-inner p{ /*texto: el reformer pilates trabaja todo el cuerpo...*/
+  font-size:1rem;
+  line-height:1.7;
+  color:var(--bone);
+}
+
+/* --------------------------------- BENEFICIOS --------------------------- */
+
+.benefits-section{
+  padding: 1rem 2rem 2rem; /*separacion abajo, costado izquiero y derecho*/
+}
+
+.benefits-inner{
+  max-width:1200px;
+  margin:0 auto;
+}
+
+.benefits-inner h2{ /* texto: beneficios*/
+  font-family:'Piazzolla', serif;
+  font-weight:500;
+  font-size:1.6rem;
+  color:var(--bone-light);
+  text-align:center;
+  margin:0 0 2.5rem;
+}
+
+.benefits-grid{ /*distribución cards*/
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+  gap:1.5rem;
+}
+
+.benefit-card{ /*cards de beneficios*/
+  background: var(--rustOpa); /*color card beneficios*/
+  border:1px solid rgba(246,242,232,0.14);
+  border-radius:4px;
+  padding:1.6rem;
+  text-align:center;
+}
+
+.benefit-card h3{ /*titulos cards*/
+  font-family:'Piazzolla', serif;
+  font-weight:500;
+  font-size:1.05rem;
+  color:var(--bone-light);
+  margin:0 0 0.7rem;
+}
+
+.benefit-card p{ /*texto dentro de las cards*/
+  font-size:0.9rem;
+  line-height:1.6;
+  color:var(--bone);
+  margin:0;
+}
+
+/* ---------------------------- HORARIOS (clases.html) ------------------------- */
+
+.schedule-section{ /*posición*/
+  padding:2rem 2rem 4rem;
+  text-align:center;
+}
+
+.schedule-inner{ 
+  max-width:600px;
+  margin:0 auto;
+}
+
+.schedule-inner h2{ /*titulo: turnos y horario*/
+  font-family:'Piazzolla', serif;
+  font-weight:500;
+  font-size:1.6rem;
+  color:var(--bone-light);
+  margin:0 0 1rem;
+}
+
+.schedule-inner p{ /*texto: clases de 50', de lunes a sábados...*/
+  font-size:1rem;
+  color:var(--bone);
+  margin:0 0 1.8rem;
+}
+
+.trial-badge{ /*te regalamos la primera clase de prueba*/
+  display:inline-block;
+  background: var(--bone-light);
+  border:1px solid var(--sage);
+  color:var(--sage);
+  font-size:0.75rem;
+  font-weight:600;
+  letter-spacing:0.03em;
+  text-transform:uppercase;
+  padding:0.35rem 0.9rem;
+  border-radius:20px;
+  margin-top:1.2rem;
+}
+
+/* ---------------------- INFO MÉTODOS DE PAGO -------------------------- */
+
+.payment-section{ /*posición*/
+  padding:2rem 2rem 6rem;
+  text-align:center;
+}
+
+.payment-inner{
+  max-width:700px;
+  margin:0 auto;
+}
+
+.payment-inner h2{ /*titulo: metodos de pago*/
+  font-family:'Piazzolla', serif;
+  font-weight:500;
+  font-size:1.6rem;
+  color:var(--bone-light);
+  margin:0 0 1rem;
+}
+
+.payment-inner p{ /*texto: los pagos se realizan en el local...*/
+  font-size:0.95rem;
+  color:var(--bone);
+  margin:0 0 2rem;
+}
+
+.payment-grid{ /*distribución cards metodos de pago*/
+  display:flex;
+  justify-content:center;
+  gap:1rem;
+  flex-wrap:wrap;
+}
+
+.payment-item{ /*cards metodos de pago*/
+  background: var(--rustOpa); /*color*/
+  border:1px solid rgba(246,242,232,0.14); /*borde cards*/
+  border-radius:3px;
+  padding:0.8rem 1.4rem;
+  font-size:0.9rem; /*tamaño de texto*/
+  color:var(--bone-light); /*color fuente dentro de card*/
+}
+
