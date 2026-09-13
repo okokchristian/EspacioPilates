@@ -22,7 +22,8 @@ const db = getFirestore(app);
 
 const ordenDias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 let turnoSeleccionado = null;
-let turnosPorDia = {};
+let turnosPorDia = {}; // fuente única de datos, compartida entre agenda y modal
+let cargaInicial = null; // promesa compartida de la primera consulta a Firestore
 
 function getEstadoSpots(libres) {
   if (libres <= 0) return { clase: "full", texto: "Completo" };
@@ -30,25 +31,34 @@ function getEstadoSpots(libres) {
   return { clase: "open", texto: `${libres} lugares` };
 }
 
+// ---------- Cargar turnos desde Firestore (una sola fuente de verdad) ----------
+async function cargarTurnosDesdeFirestore() {
+  const snapshot = await getDocs(collection(db, "turnos"));
+  turnosPorDia = {};
+
+  snapshot.forEach((docSnap) => {
+    const turno = { id: docSnap.id, ...docSnap.data() };
+    const dia = turno.día;
+    if (!turnosPorDia[dia]) turnosPorDia[dia] = [];
+    turnosPorDia[dia].push(turno);
+  });
+
+  Object.keys(turnosPorDia).forEach((dia) => {
+    turnosPorDia[dia].sort((a, b) => a.hora.localeCompare(b.hora));
+  });
+}
+
+// ---------- Pintar la agenda principal ----------
 async function cargarTurnos() {
   const tabsContainer = document.getElementById("agenda-tabs");
   const horariosContainer = document.getElementById("agenda-horarios");
   horariosContainer.innerHTML = "<p>Cargando turnos...</p>";
 
   try {
-    const snapshot = await getDocs(collection(db, "turnos"));
-    turnosPorDia = {};
-
-    snapshot.forEach((docSnap) => {
-      const turno = { id: docSnap.id, ...docSnap.data() };
-      const dia = turno.día;
-      if (!turnosPorDia[dia]) turnosPorDia[dia] = [];
-      turnosPorDia[dia].push(turno);
-    });
-
-    Object.keys(turnosPorDia).forEach((dia) => {
-      turnosPorDia[dia].sort((a, b) => a.hora.localeCompare(b.hora));
-    });
+    if (!cargaInicial) {
+      cargaInicial = cargarTurnosDesdeFirestore();
+    }
+    await cargaInicial;
 
     tabsContainer.innerHTML = "";
     const diasDisponibles = ordenDias.filter((d) => turnosPorDia[d]);
@@ -94,52 +104,31 @@ function pintarHorariosDia(dia) {
   });
 }
 
-let turnosPorDiaModal = {};
-
-async function cargarTurnosModal() {
+// ---------- Pintar el modal, REUSANDO turnosPorDia (sin nueva consulta) ----------
+function pintarModal() {
   const tabsContainer = document.getElementById("modal-tabs");
   const lista = document.getElementById("modal-turnos-list");
-  lista.innerHTML = "<p>Cargando turnos...</p>";
 
-  try {
-    const snapshot = await getDocs(collection(db, "turnos"));
-    turnosPorDiaModal = {};
+  tabsContainer.innerHTML = "";
+  const diasDisponibles = ordenDias.filter((d) => turnosPorDia[d]);
 
-    snapshot.forEach((docSnap) => {
-      const turno = { id: docSnap.id, ...docSnap.data() };
-      const dia = turno.día;
-      if (!turnosPorDiaModal[dia]) turnosPorDiaModal[dia] = [];
-      turnosPorDiaModal[dia].push(turno);
+  diasDisponibles.forEach((dia, index) => {
+    const tab = document.createElement("button");
+    tab.type = "button";
+    tab.className = `modal-tab ${index === 0 ? "active" : ""}`;
+    tab.textContent = dia;
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".modal-tab").forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+      pintarTurnosModalDia(dia);
     });
+    tabsContainer.appendChild(tab);
+  });
 
-    Object.keys(turnosPorDiaModal).forEach((dia) => {
-      turnosPorDiaModal[dia].sort((a, b) => a.hora.localeCompare(b.hora));
-    });
-
-    tabsContainer.innerHTML = "";
-    const diasDisponibles = ordenDias.filter((d) => turnosPorDiaModal[d]);
-
-    diasDisponibles.forEach((dia, index) => {
-      const tab = document.createElement("button");
-      tab.type = "button";
-      tab.className = `modal-tab ${index === 0 ? "active" : ""}`;
-      tab.textContent = dia;
-      tab.addEventListener("click", () => {
-        document.querySelectorAll(".modal-tab").forEach((t) => t.classList.remove("active"));
-        tab.classList.add("active");
-        pintarTurnosModalDia(dia);
-      });
-      tabsContainer.appendChild(tab);
-    });
-
-    if (diasDisponibles.length > 0) {
-      pintarTurnosModalDia(diasDisponibles[0]);
-    } else {
-      lista.innerHTML = "<p>No hay turnos cargados.</p>";
-    }
-  } catch (error) {
-    lista.innerHTML = "<p>No se pudieron cargar los turnos.</p>";
-    console.error("Error cargando turnos en modal:", error);
+  if (diasDisponibles.length > 0) {
+    pintarTurnosModalDia(diasDisponibles[0]);
+  } else {
+    lista.innerHTML = "<p>No hay turnos cargados.</p>";
   }
 }
 
@@ -147,7 +136,7 @@ function pintarTurnosModalDia(dia) {
   const lista = document.getElementById("modal-turnos-list");
   lista.innerHTML = "";
 
-  turnosPorDiaModal[dia].forEach((turno) => {
+  turnosPorDia[dia].forEach((turno) => {
     const libres = turno.cupoMaximo - turno.reservados;
     const estado = getEstadoSpots(libres);
     const completo = libres <= 0;
@@ -170,6 +159,7 @@ function pintarTurnosModalDia(dia) {
   });
 }
 
+// ---------- Navegación entre pasos del modal ----------
 function mostrarPasoTurnos() {
   document.getElementById("modal-step-turnos").style.display = "block";
   document.getElementById("modal-step-form").style.display = "none";
@@ -190,10 +180,20 @@ function mostrarPasoExito() {
   document.getElementById("modal-step-exito").style.display = "block";
 }
 
-function abrirModal() {
+async function abrirModal() {
   document.getElementById("modal-overlay").classList.add("open");
   mostrarPasoTurnos();
-  cargarTurnosModal();
+
+  if (!cargaInicial) {
+    cargaInicial = cargarTurnosDesdeFirestore();
+  }
+
+  if (Object.keys(turnosPorDia).length === 0) {
+    document.getElementById("modal-turnos-list").innerHTML = "<p>Cargando turnos...</p>";
+  }
+
+  await cargaInicial;
+  pintarModal();
 }
 
 function cerrarModal() {
@@ -202,6 +202,7 @@ function cerrarModal() {
   turnoSeleccionado = null;
 }
 
+// ---------- Confirmar reserva (resta cupo con transacción segura) ----------
 async function confirmarReserva(datosPersona) {
   const turnoRef = doc(db, "turnos", turnoSeleccionado.id);
 
@@ -229,64 +230,7 @@ async function confirmarReserva(datosPersona) {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  cargarTurnos();
-
-  document.querySelectorAll(".open-reserva-modal").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      abrirModal();
-    });
-  });
-
-  document.getElementById("modal-close").addEventListener("click", cerrarModal);
-  document.getElementById("modal-overlay").addEventListener("click", (e) => {
-    if (e.target.id === "modal-overlay") cerrarModal();
-  });
-
-  document.getElementById("btn-volver-turnos").addEventListener("click", mostrarPasoTurnos);
-
-  document.getElementById("btn-cerrar-exito").addEventListener("click", () => {
-    cerrarModal();
-    cargarTurnos();
-  });
-  
-
-  document.getElementById("reserva-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const datosPersona = {
-    nombre: document.getElementById("input-nombre").value.trim(),
-    apellido: document.getElementById("input-apellido").value.trim(),
-    email: document.getElementById("input-email").value.trim(),
-    telefono: document.getElementById("input-telefono").value.trim()
-  };
-
-  const errores = validarFormulario(datosPersona);
-  mostrarErrores(errores);
-
-  if (Object.keys(errores).length > 0) {
-    return; // no sigue si hay errores
-  }
-
-  const submitBtn = e.target.querySelector("button[type='submit']");
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Reservando...";
-
-  try {
-    await confirmarReserva(datosPersona);
-    mostrarPasoExito();
-  } catch (error) {
-    alert(error.message || "Hubo un error al confirmar la reserva. Intentá de nuevo.");
-    console.error(error);
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Confirmar reserva";
-  }
-});
-});
-
-
+// ---------- Validaciones del formulario ----------
 function validarFormulario(datos) {
   const errores = {};
 
@@ -326,3 +270,61 @@ function mostrarErrores(errores) {
     }
   });
 }
+
+// ---------- Eventos ----------
+document.addEventListener("DOMContentLoaded", () => {
+  cargarTurnos();
+
+  document.querySelectorAll(".open-reserva-modal").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      abrirModal();
+    });
+  });
+
+  document.getElementById("modal-close").addEventListener("click", cerrarModal);
+  document.getElementById("modal-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "modal-overlay") cerrarModal();
+  });
+
+  document.getElementById("btn-volver-turnos").addEventListener("click", mostrarPasoTurnos);
+
+document.getElementById("btn-cerrar-exito").addEventListener("click", () => {
+    cerrarModal();
+    cargaInicial = null; // forzamos releer cupos actualizados después de una reserva
+    cargarTurnos();
+});
+
+  document.getElementById("reserva-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const datosPersona = {
+      nombre: document.getElementById("input-nombre").value.trim(),
+      apellido: document.getElementById("input-apellido").value.trim(),
+      email: document.getElementById("input-email").value.trim(),
+      telefono: document.getElementById("input-telefono").value.trim()
+    };
+
+    const errores = validarFormulario(datosPersona);
+    mostrarErrores(errores);
+
+    if (Object.keys(errores).length > 0) {
+      return;
+    }
+
+    const submitBtn = e.target.querySelector("button[type='submit']");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Reservando...";
+
+    try {
+      await confirmarReserva(datosPersona);
+      mostrarPasoExito();
+    } catch (error) {
+      alert(error.message || "Hubo un error al confirmar la reserva. Intentá de nuevo.");
+      console.error(error);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Confirmar reserva";
+    }
+  });
+});
