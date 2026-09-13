@@ -122,7 +122,7 @@
   .hero{
     max-width:1200px;
     margin:0 auto;
-    padding: 8rem 2rem 5rem;
+    padding: 9rem 2rem 5rem;
     display:grid;
     grid-template-columns:1fr;
     align-items:center;
@@ -223,11 +223,11 @@
 
 .scroll-hint{
   position:absolute;
-  bottom:9rem;
-  left:50%;
+  bottom:0.5rem; /*q tan arriba*/
+  left:50%; /*centrado*/
   transform:translateX(-50%);
-  width:1px;
-  height:2.5rem;
+  width:1px; /*ancho*/
+  height:2.5rem; /*largo*/
   overflow:hidden;
 }
 
