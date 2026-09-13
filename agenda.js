@@ -250,30 +250,79 @@ document.addEventListener("DOMContentLoaded", () => {
     cerrarModal();
     cargarTurnos();
   });
+  
 
   document.getElementById("reserva-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const datosPersona = {
-      nombre: document.getElementById("input-nombre").value.trim(),
-      apellido: document.getElementById("input-apellido").value.trim(),
-      email: document.getElementById("input-email").value.trim(),
-      telefono: document.getElementById("input-telefono").value.trim()
-    };
+  const datosPersona = {
+    nombre: document.getElementById("input-nombre").value.trim(),
+    apellido: document.getElementById("input-apellido").value.trim(),
+    email: document.getElementById("input-email").value.trim(),
+    telefono: document.getElementById("input-telefono").value.trim()
+  };
 
-    const submitBtn = e.target.querySelector("button[type='submit']");
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Reservando...";
+  const errores = validarFormulario(datosPersona);
+  mostrarErrores(errores);
 
-    try {
-      await confirmarReserva(datosPersona);
-      mostrarPasoExito();
-    } catch (error) {
-      alert(error.message || "Hubo un error al confirmar la reserva. Intentá de nuevo.");
-      console.error(error);
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Confirmar reserva";
+  if (Object.keys(errores).length > 0) {
+    return; // no sigue si hay errores
+  }
+
+  const submitBtn = e.target.querySelector("button[type='submit']");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Reservando...";
+
+  try {
+    await confirmarReserva(datosPersona);
+    mostrarPasoExito();
+  } catch (error) {
+    alert(error.message || "Hubo un error al confirmar la reserva. Intentá de nuevo.");
+    console.error(error);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Confirmar reserva";
+  }
+});
+});
+
+
+function validarFormulario(datos) {
+  const errores = {};
+
+  const nombreRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]{2,}$/;
+  if (!nombreRegex.test(datos.nombre.trim())) {
+    errores.nombre = "Solo letras, mínimo 2 caracteres.";
+  }
+
+  if (!nombreRegex.test(datos.apellido.trim())) {
+    errores.apellido = "Solo letras, mínimo 2 caracteres.";
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(datos.email.trim())) {
+    errores.email = "Ingresá un email válido.";
+  }
+
+  const telefonoLimpio = datos.telefono.replace(/\s+/g, "");
+  const telefonoRegex = /^(\+598)?0?9\d{7}$/;
+  if (!telefonoRegex.test(telefonoLimpio)) {
+    errores.telefono = "Ingresá un celular uruguayo válido (ej: 099123456).";
+  }
+
+  return errores;
+}
+
+function mostrarErrores(errores) {
+  ["nombre", "apellido", "email", "telefono"].forEach((campo) => {
+    const spanError = document.getElementById(`error-${campo}`);
+    const input = document.getElementById(`input-${campo}`);
+    if (errores[campo]) {
+      spanError.textContent = errores[campo];
+      input.classList.add("invalid");
+    } else {
+      spanError.textContent = "";
+      input.classList.remove("invalid");
     }
   });
-});
+}

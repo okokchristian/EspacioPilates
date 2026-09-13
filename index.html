@@ -142,16 +142,31 @@
         <h2>Confirmá tu reserva</h2>
         <p class="modal-turno-elegido" id="modal-turno-elegido"></p>
 
-        <form id="reserva-form">
-          <div class="modal-form-row">
-            <input type="text" id="input-nombre" placeholder="Nombre" required>
-            <input type="text" id="input-apellido" placeholder="Apellido" required>
-          </div>
-          <input type="email" id="input-email" placeholder="Email" required>
-          <input type="tel" id="input-telefono" placeholder="Teléfono" required>
-          <button type="button" class="btn-secondary" id="btn-volver-turnos">Atrás</button>
-          <button type="submit" class="btn-primary">Confirmar reserva</button>
-        </form>
+         <form id="reserva-form">
+  <div class="modal-form-row">
+    <div class="input-group">
+      <input type="text" id="input-nombre" placeholder="Nombre">
+      <span class="input-error" id="error-nombre"></span>
+    </div>
+    <div class="input-group">
+      <input type="text" id="input-apellido" placeholder="Apellido">
+      <span class="input-error" id="error-apellido"></span>
+    </div>
+  </div>
+
+  <div class="input-group">
+    <input type="text" id="input-email" placeholder="Email">
+    <span class="input-error" id="error-email"></span>
+  </div>
+
+  <div class="input-group">
+    <input type="text" id="input-telefono" placeholder="Teléfono (ej: 099123456)">
+    <span class="input-error" id="error-telefono"></span>
+  </div>
+
+  <button type="button" class="btn-secondary" id="btn-volver-turnos">Atrás</button>
+  <button type="submit" class="btn-primary">Confirmar reserva</button>
+</form>
       </div>
 
       <div class="modal-step" id="modal-step-exito" style="display:none;">

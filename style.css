@@ -658,3 +658,21 @@
     outline:2px solid var(--rust);
     outline-offset:3px;
   }
+
+  /*==============================VALIDACIONES=================================*/
+  .input-group{
+  display:flex;
+  flex-direction:column;
+  gap:0.3rem;
+  width:100%;
+}
+
+.input-error{
+  color:#E9B8A4;
+  font-size:0.78rem;
+  min-height:1rem;
+}
+
+#reserva-form input.invalid{
+  border-color:#9C4A2E;
+}
