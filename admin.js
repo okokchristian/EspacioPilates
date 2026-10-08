@@ -10,7 +10,8 @@ import {
   where,
   getDocs,
   doc,
-  getDoc
+  getDoc,
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const seccionLogin = document.getElementById("login");
@@ -102,19 +103,66 @@ function pintarReservas(reservas) {
       const li = document.createElement("li");
       li.className = "panel-reserva";
 
+      const info = document.createElement("div");
+      info.className = "panel-reserva-info";
+
       const nombre = document.createElement("strong");
       nombre.textContent = `${r.nombre} ${r.apellido}`;
 
       const contacto = document.createElement("span");
       contacto.textContent = `${r.telefono} · ${r.email}`;
 
-      li.append(nombre, contacto);
+      info.append(nombre, contacto);
+
+      const botonCancelar = document.createElement("button");
+      botonCancelar.type = "button";
+      botonCancelar.className = "btn-cancelar";
+      botonCancelar.textContent = "Cancelar";
+      botonCancelar.addEventListener("click", () => cancelarReserva(r, botonCancelar));
+
+      li.append(info, botonCancelar);
       ul.appendChild(li);
     });
 
     bloque.appendChild(ul);
     contenido.appendChild(bloque);
   });
+}
+
+// ---------- Cancelar una reserva y liberar el lugar ----------
+async function cancelarReserva(reserva, boton) {
+  const confirmado = confirm(
+    `¿Cancelar la reserva de ${reserva.nombre} ${reserva.apellido} (${reserva.hora})?\n` +
+    `El lugar va a quedar libre en la agenda.`
+  );
+  if (!confirmado) return;
+
+  boton.disabled = true;
+  boton.textContent = "Cancelando...";
+
+  const reservaRef = doc(db, "reservas", reserva.id);
+  const ocupacionRef = doc(db, "ocupacion", `${reserva.fecha}_${reserva.turnoId}`);
+
+  try {
+    await runTransaction(db, async (transaction) => {
+      const ocupacionDoc = await transaction.get(ocupacionRef);
+
+      // Se borra la reserva y se resta 1 al cupo de esa clase,
+      // en la misma operación: o se hacen las dos cosas, o ninguna.
+      transaction.delete(reservaRef);
+
+      if (ocupacionDoc.exists() && ocupacionDoc.data().reservados > 0) {
+        transaction.update(ocupacionRef, { reservados: ocupacionDoc.data().reservados - 1 });
+      }
+    });
+
+    cargarReservas(inputFecha.value); // recargar la lista
+  } catch (error) {
+    alert("No se pudo cancelar la reserva. Intentá de nuevo.");
+    console.error(error);
+    boton.disabled = false;
+    boton.textContent = "Cancelar";
+  }
 }
 
 // ---------- Cambiar de día ----------

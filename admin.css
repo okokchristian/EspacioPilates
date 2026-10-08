@@ -132,14 +132,36 @@ button:disabled {
 
 .panel-reserva {
     display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
     padding: 0.7rem 0.9rem;
     background: #f8f4ee;
     border-radius: 10px;
 }
 
-.panel-reserva span {
+.panel-reserva-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.panel-reserva-info span {
     font-size: 0.9rem;
     color: #6b5f57;
+    overflow-wrap: anywhere;
+}
+
+.btn-cancelar {
+    flex-shrink: 0;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
+    color: #b42318;
+    background: transparent;
+    border: 1px solid #e3b3ad;
+}
+
+.btn-cancelar:hover {
+    background: #fdf0ef;
 }
