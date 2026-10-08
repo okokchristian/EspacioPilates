@@ -55,9 +55,11 @@ function proximasFechas(cantidad = 6) {
 
         if (!turnosPorDia[nombre]) continue; // ese día no hay clases (domingo)
 
-    const clave = aClaveFecha(fecha);
+        const clave = aClaveFecha(fecha);
     if (bloqueos.has(clave)) continue;   // día bloqueado por el estudio
 
+    // Hoy, si ya pasaron todas las clases, no lo mostramos
+    if (i === 0 && turnosPorDia[nombre].every((turno) => yaPaso({ clave }, turno))) continue;
         fechas.push({
       clave,                                               // "2026-10-13"
       nombre,                                              // "Lunes"
@@ -365,7 +367,7 @@ function mostrarErrores(errores) {
   });
 }
 
-// ---------- Eventos ----------
+// ------------------------------- EVENTOS  -------------------------------
 document.addEventListener("DOMContentLoaded", () => {
   cargarTurnos();
 
