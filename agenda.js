@@ -4,12 +4,10 @@ import {
   getDocs,
   doc,
   runTransaction,
-  addDoc,
   query,
   where,
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const ordenDias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 let turnoSeleccionado = null;
 let turnosPorDia = {}; // fuente única de datos, compartida entre agenda y modal
 let cargaInicial = null; // promesa compartida de la primera consulta a Firestore
@@ -167,47 +165,56 @@ function pintarModal() {
   const lista = document.getElementById("modal-turnos-list");
 
   tabsContainer.innerHTML = "";
-  const diasDisponibles = ordenDias.filter((d) => turnosPorDia[d]);
+  const fechas = proximasFechas();
 
-  diasDisponibles.forEach((dia, index) => {
+  fechas.forEach((fecha, index) => {
     const tab = document.createElement("button");
     tab.type = "button";
     tab.className = `modal-tab ${index === 0 ? "active" : ""}`;
-    tab.textContent = dia;
+    tab.textContent = fecha.etiqueta;
     tab.addEventListener("click", () => {
       document.querySelectorAll(".modal-tab").forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
-      pintarTurnosModalDia(dia);
+      pintarTurnosModalDia(fecha);
     });
     tabsContainer.appendChild(tab);
   });
 
-  if (diasDisponibles.length > 0) {
-    pintarTurnosModalDia(diasDisponibles[0]);
+  if (fechas.length > 0) {
+    pintarTurnosModalDia(fechas[0]);
   } else {
     lista.innerHTML = "<p>No hay turnos cargados.</p>";
   }
 }
 
-function pintarTurnosModalDia(dia) {
+function pintarTurnosModalDia(fecha) {
   const lista = document.getElementById("modal-turnos-list");
   lista.innerHTML = "";
 
-  turnosPorDia[dia].forEach((turno) => {
-    const libres = turno.cupoMaximo - turno.reservados;
-    const estado = getEstadoSpots(libres);
-    const completo = libres <= 0;
+  turnosPorDia[fecha.nombre].forEach((turno) => {
+    const libres = turno.cupoMaximo - reservadosEn(fecha, turno);
+    const pasado = yaPaso(fecha, turno);
+    const estado = pasado
+      ? { clase: "full", texto: "Finalizado" }
+      : getEstadoSpots(libres);
+    const noDisponible = pasado || libres <= 0;
 
     const item = document.createElement("div");
-    item.className = `modal-turno-item ${completo ? "disabled" : ""}`;
+    item.className = `modal-turno-item ${noDisponible ? "disabled" : ""}`;
     item.innerHTML = `
       <span class="modal-turno-info">${turno.hora}</span>
       <span class="spots ${estado.clase}">${estado.texto}</span>
     `;
 
-    if (!completo) {
+    if (!noDisponible) {
       item.addEventListener("click", () => {
-        turnoSeleccionado = turno;
+        // Guardamos el turno junto con la fecha elegida
+        const [, mes, dia] = fecha.clave.split("-");
+        turnoSeleccionado = {
+          ...turno,
+          fecha: fecha.clave,                                       // "2026-10-13"
+          fechaTexto: `${fecha.nombre} ${Number(dia)}/${Number(mes)}` // "Lunes 13/10"
+        };
         mostrarPasoForm();
       });
     }
@@ -228,7 +235,7 @@ function mostrarPasoForm() {
   document.getElementById("modal-step-form").style.display = "block";
   document.getElementById("modal-step-exito").style.display = "none";
   document.getElementById("modal-turno-elegido").textContent =
-    `${turnoSeleccionado.día} — ${turnoSeleccionado.hora}`;
+  `${turnoSeleccionado.fechaTexto} — ${turnoSeleccionado.hora}`;
 }
 
 function mostrarPasoExito() {
@@ -259,31 +266,41 @@ function cerrarModal() {
   turnoSeleccionado = null;
 }
 
-// ---------- Confirmar reserva (resta cupo con transacción segura) ----------
+// ---------- Confirmar reserva (suma el cupo de esa fecha con transacción segura) ----------
 async function confirmarReserva(datosPersona) {
-  const turnoRef = doc(db, "turnos", turnoSeleccionado.id);
+  const turno = turnoSeleccionado;
+  const ocupacionRef = doc(db, "ocupacion", `${turno.fecha}_${turno.id}`);
+  const reservaRef = doc(collection(db, "reservas")); // documento nuevo, con id automático
 
   await runTransaction(db, async (transaction) => {
-    const turnoDoc = await transaction.get(turnoRef);
-    if (!turnoDoc.exists()) throw new Error("El turno ya no existe.");
+    const ocupacionDoc = await transaction.get(ocupacionRef);
+    const reservados = ocupacionDoc.exists() ? ocupacionDoc.data().reservados : 0;
 
-    const data = turnoDoc.data();
-    if (data.reservados >= data.cupoMaximo) {
+    if (reservados >= turno.cupoMaximo) {
       throw new Error("Este turno ya no tiene lugares disponibles.");
     }
 
-    transaction.update(turnoRef, { reservados: data.reservados + 1 });
-  });
+    // Primera reserva de esa clase en esa fecha: se crea el contador.
+    // Si ya existe, se le suma 1.
+    if (ocupacionDoc.exists()) {
+      transaction.update(ocupacionRef, { reservados: reservados + 1 });
+    } else {
+      transaction.set(ocupacionRef, { fecha: turno.fecha, turnoId: turno.id, reservados: 1 });
+    }
 
-  await addDoc(collection(db, "reservas"), {
-    turnoId: turnoSeleccionado.id,
-    día: turnoSeleccionado.día,
-    hora: turnoSeleccionado.hora,
-    nombre: datosPersona.nombre,
-    apellido: datosPersona.apellido,
-    email: datosPersona.email,
-    telefono: datosPersona.telefono,
-    creado: new Date().toISOString()
+    // La reserva se guarda en la MISMA transacción:
+    // o se guardan las dos cosas, o ninguna.
+    transaction.set(reservaRef, {
+      turnoId: turno.id,
+      fecha: turno.fecha,
+      día: turno.día,
+      hora: turno.hora,
+      nombre: datosPersona.nombre,
+      apellido: datosPersona.apellido,
+      email: datosPersona.email,
+      telefono: datosPersona.telefono,
+      creado: new Date().toISOString()
+    });
   });
 }
 
