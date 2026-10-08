@@ -1,24 +1,11 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import { db } from "./firebase.js";
 import {
-  getFirestore,
   collection,
   getDocs,
   doc,
   runTransaction,
   addDoc
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAyH4y4NqMM-U-taekGdSGoh1pFhCG6bdc",
-  authDomain: "espaciopilates-9290c.firebaseapp.com",
-  projectId: "espaciopilates-9290c",
-  storageBucket: "espaciopilates-9290c.firebasestorage.app",
-  messagingSenderId: "431225733354",
-  appId: "1:431225733354:web:105cbd82b1a444365b9793"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
 
 const ordenDias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 let turnoSeleccionado = null;
@@ -29,6 +16,36 @@ function getEstadoSpots(libres) {
   if (libres <= 0) return { clase: "full", texto: "Completo" };
   if (libres <= 2) return { clase: "low", texto: libres === 1 ? "1 lugar" : `${libres} lugares` };
   return { clase: "open", texto: `${libres} lugares` };
+}
+// ---------- Fechas reales de los próximos días con clase ----------
+const NOMBRES_DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+// Convierte una fecha en texto "2026-10-13" (para guardar y comparar)
+function aClaveFecha(fecha) {
+  const mes = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dia = String(fecha.getDate()).padStart(2, "0");
+  return `${fecha.getFullYear()}-${mes}-${dia}`;
+}
+
+// Devuelve los próximos días que tienen clases (por defecto, 6: una semana)
+function proximasFechas(cantidad = 6) {
+  const fechas = [];
+  const hoy = new Date();
+
+  for (let i = 0; fechas.length < cantidad && i < 14; i++) {
+    const fecha = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + i);
+    const nombre = NOMBRES_DIAS[fecha.getDay()];
+
+    if (!turnosPorDia[nombre]) continue; // ese día no hay clases (domingo)
+
+    fechas.push({
+      clave: aClaveFecha(fecha),                         // "2026-10-13"
+      nombre,                                            // "Lunes"
+      etiqueta: `${nombre.slice(0, 3)} ${fecha.getDate()}` // "Lun 13"
+    });
+  }
+
+  return fechas;
 }
 
 // ---------- Cargar turnos desde Firestore (una sola fuente de verdad) ----------
@@ -61,22 +78,22 @@ async function cargarTurnos() {
     await cargaInicial;
 
     tabsContainer.innerHTML = "";
-    const diasDisponibles = ordenDias.filter((d) => turnosPorDia[d]);
+    const fechas = proximasFechas();
 
-    diasDisponibles.forEach((dia, index) => {
+    fechas.forEach((fecha, index) => {
       const tab = document.createElement("button");
       tab.className = `agenda-tab ${index === 0 ? "active" : ""}`;
-      tab.textContent = dia;
+      tab.textContent = fecha.etiqueta;
       tab.addEventListener("click", () => {
         document.querySelectorAll(".agenda-tab").forEach((t) => t.classList.remove("active"));
         tab.classList.add("active");
-        pintarHorariosDia(dia);
+        pintarHorariosDia(fecha);
       });
       tabsContainer.appendChild(tab);
     });
 
-    if (diasDisponibles.length > 0) {
-      pintarHorariosDia(diasDisponibles[0]);
+    if (fechas.length > 0) {
+      pintarHorariosDia(fechas[0]);
     } else {
       horariosContainer.innerHTML = "<p>No hay turnos cargados.</p>";
     }
@@ -86,11 +103,11 @@ async function cargarTurnos() {
   }
 }
 
-function pintarHorariosDia(dia) {
+function pintarHorariosDia(fecha) {
   const horariosContainer = document.getElementById("agenda-horarios");
   horariosContainer.innerHTML = "";
 
-  turnosPorDia[dia].forEach((turno) => {
+    turnosPorDia[fecha.nombre].forEach((turno) => {
     const libres = turno.cupoMaximo - turno.reservados;
     const estado = getEstadoSpots(libres);
 
