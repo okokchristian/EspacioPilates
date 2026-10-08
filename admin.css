@@ -97,3 +97,49 @@ button:disabled {
     gap: 1rem;
     flex-wrap: wrap;
 }
+.panel-filtros {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.panel-filtros input {
+    margin-bottom: 0;
+}
+
+.panel-vacio {
+    color: #6b5f57;
+}
+
+.panel-clase {
+    padding: 1rem 0;
+    border-top: 1px solid #e6ddd2;
+}
+
+.panel-clase h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+}
+
+.panel-clase ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.panel-reserva {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.7rem 0.9rem;
+    background: #f8f4ee;
+    border-radius: 10px;
+}
+
+.panel-reserva span {
+    font-size: 0.9rem;
+    color: #6b5f57;
+}
