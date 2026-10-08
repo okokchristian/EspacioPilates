@@ -4,13 +4,16 @@ import {
   getDocs,
   doc,
   runTransaction,
-  addDoc
+  addDoc,
+  query,
+  where,
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const ordenDias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 let turnoSeleccionado = null;
 let turnosPorDia = {}; // fuente única de datos, compartida entre agenda y modal
 let cargaInicial = null; // promesa compartida de la primera consulta a Firestore
+let ocupacion = {}; // cupos ocupados por fecha: { "2026-10-13_idTurno": 3 }
 
 function getEstadoSpots(libres) {
   if (libres <= 0) return { clase: "full", texto: "Completo" };
@@ -48,6 +51,38 @@ function proximasFechas(cantidad = 6) {
   return fechas;
 }
 
+// ---------- Ocupación por fecha ----------
+// Trae de Firestore cuántos lugares están ocupados en cada clase de esas fechas
+async function cargarOcupacion(fechas) {
+  ocupacion = {};
+  if (fechas.length === 0) return;
+
+  const consulta = query(
+    collection(db, "ocupacion"),
+    where("fecha", ">=", fechas[0].clave),
+    where("fecha", "<=", fechas[fechas.length - 1].clave)
+  );
+
+  const snapshot = await getDocs(consulta);
+  snapshot.forEach((docSnap) => {
+    ocupacion[docSnap.id] = docSnap.data().reservados || 0;
+  });
+}
+
+// Cuántos lugares hay ocupados en una clase de una fecha concreta
+function reservadosEn(fecha, turno) {
+  return ocupacion[`${fecha.clave}_${turno.id}`] || 0;
+}
+
+// true si la clase es de hoy y su horario ya empezó
+function yaPaso(fecha, turno) {
+  const ahora = new Date();
+  if (fecha.clave !== aClaveFecha(ahora)) return false;
+
+  const [horas, minutos] = turno.hora.split(":").map(Number);
+  return ahora.getHours() * 60 + ahora.getMinutes() >= horas * 60 + minutos;
+}
+
 // ---------- Cargar turnos desde Firestore (una sola fuente de verdad) ----------
 async function cargarTurnosDesdeFirestore() {
   const snapshot = await getDocs(collection(db, "turnos"));
@@ -63,6 +98,9 @@ async function cargarTurnosDesdeFirestore() {
   Object.keys(turnosPorDia).forEach((dia) => {
     turnosPorDia[dia].sort((a, b) => a.hora.localeCompare(b.hora));
   });
+
+  const fechas = proximasFechas();
+  await cargarOcupacion(fechas);
 }
 
 // ---------- Pintar la agenda principal ----------
@@ -108,8 +146,10 @@ function pintarHorariosDia(fecha) {
   horariosContainer.innerHTML = "";
 
     turnosPorDia[fecha.nombre].forEach((turno) => {
-    const libres = turno.cupoMaximo - turno.reservados;
-    const estado = getEstadoSpots(libres);
+    const libres = turno.cupoMaximo - reservadosEn(fecha, turno);
+    const estado = yaPaso(fecha, turno)
+      ? { clase: "full", texto: "Finalizado" }
+      : getEstadoSpots(libres);
 
     const item = document.createElement("div");
     item.className = "horario-item";
