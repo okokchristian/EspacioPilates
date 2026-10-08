@@ -414,7 +414,10 @@ document.getElementById("btn-cerrar-exito").addEventListener("click", () => {
       await confirmarReserva(datosPersona);
       mostrarPasoExito();
     } catch (error) {
-      alert(error.message || "Hubo un error al confirmar la reserva. Intentá de nuevo.");
+      const mensaje = error.code === "permission-denied"
+        ? "Ese turno ya no está disponible. Recargá la página para ver los horarios actualizados."
+        : (error.message || "Hubo un error al confirmar la reserva. Intentá de nuevo.");
+      alert(mensaje);      
       console.error(error);
     } finally {
       submitBtn.disabled = false;
