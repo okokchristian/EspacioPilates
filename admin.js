@@ -13,6 +13,8 @@ import {
   doc,
   getDoc,
   setDoc,
+  addDoc,
+  updateDoc,
   deleteDoc,
   runTransaction
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
@@ -57,6 +59,7 @@ onAuthStateChanged(auth, async (usuario) => {
   cargarReservas(inputFecha.value);
 
     cargarBloqueos();
+    cargarHorarios();
 });
 
 // ---------- Traer las reservas de una fecha ----------
@@ -307,6 +310,172 @@ document.getElementById("bloqueo-form").addEventListener("submit", async (e) => 
     cargarBloqueos();
   } catch (error) {
     alert("No se pudo bloquear el día. Intentá de nuevo.");
+    console.error(error);
+  } finally {
+    boton.disabled = false;
+  }
+});
+
+// ================= HORARIOS (turnos fijos de la semana) =================
+
+const ORDEN_DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+let turnosCargados = []; // para revisar duplicados al agregar
+
+// ---------- Mostrar los turnos agrupados por día ----------
+async function cargarHorarios() {
+  const contenedor = document.getElementById("horarios-lista");
+  contenedor.textContent = "Cargando horarios...";
+
+  try {
+    const snapshot = await getDocs(collection(db, "turnos"));
+    turnosCargados = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    contenedor.textContent = "";
+
+    if (turnosCargados.length === 0) {
+      contenedor.textContent = "No hay turnos cargados.";
+      return;
+    }
+
+    ORDEN_DIAS.forEach((dia) => {
+      const delDia = turnosCargados
+        .filter((t) => t["día"] === dia)
+        .sort((a, b) => a.hora.localeCompare(b.hora));
+      if (delDia.length === 0) return;
+
+      const bloque = document.createElement("section");
+      bloque.className = "panel-clase";
+
+      const titulo = document.createElement("h2");
+      titulo.textContent = `${dia} · ${delDia.length} ${delDia.length === 1 ? "turno" : "turnos"}`;
+      bloque.appendChild(titulo);
+
+      const ul = document.createElement("ul");
+      delDia.forEach((turno) => ul.appendChild(crearFilaTurno(turno)));
+
+      bloque.appendChild(ul);
+      contenedor.appendChild(bloque);
+    });
+  } catch (error) {
+    contenedor.textContent = "No se pudieron cargar los horarios.";
+    console.error(error);
+  }
+}
+
+// ---------- Una fila: hora, cupo editable, Guardar y Eliminar ----------
+function crearFilaTurno(turno) {
+  const li = document.createElement("li");
+  li.className = "panel-reserva";
+
+  const hora = document.createElement("strong");
+  hora.textContent = turno.hora;
+
+  const acciones = document.createElement("div");
+  acciones.className = "turno-acciones";
+
+  const etiquetaCupo = document.createElement("label");
+  etiquetaCupo.textContent = "Cupo";
+  etiquetaCupo.className = "turno-cupo-label";
+
+  const inputCupo = document.createElement("input");
+  inputCupo.type = "number";
+  inputCupo.min = "1";
+  inputCupo.max = "50";
+  inputCupo.value = turno.cupoMaximo;
+  inputCupo.className = "turno-cupo";
+  inputCupo.setAttribute("aria-label", `Cupo del turno de las ${turno.hora}`);
+
+  const botonGuardar = document.createElement("button");
+  botonGuardar.type = "button";
+  botonGuardar.className = "btn-secundario btn-chico";
+  botonGuardar.textContent = "Guardar";
+  botonGuardar.addEventListener("click", () => guardarCupo(turno, inputCupo, botonGuardar));
+
+  const botonEliminar = document.createElement("button");
+  botonEliminar.type = "button";
+  botonEliminar.className = "btn-cancelar";
+  botonEliminar.textContent = "Eliminar";
+  botonEliminar.addEventListener("click", () => eliminarTurno(turno, botonEliminar));
+
+  acciones.append(etiquetaCupo, inputCupo, botonGuardar, botonEliminar);
+  li.append(hora, acciones);
+  return li;
+}
+
+// ---------- Cambiar el cupo de un turno ----------
+async function guardarCupo(turno, input, boton) {
+  const cupo = Number(input.value);
+  if (!Number.isInteger(cupo) || cupo < 1 || cupo > 50) {
+    alert("El cupo tiene que ser un número entero entre 1 y 50.");
+    return;
+  }
+
+  boton.disabled = true;
+  try {
+    await updateDoc(doc(db, "turnos", turno.id), { cupoMaximo: cupo });
+    boton.textContent = "Guardado ✓";
+    setTimeout(() => { boton.textContent = "Guardar"; }, 1500);
+  } catch (error) {
+    alert("No se pudo guardar el cupo. Intentá de nuevo.");
+    console.error(error);
+  } finally {
+    boton.disabled = false;
+  }
+}
+
+// ---------- Eliminar un turno ----------
+async function eliminarTurno(turno, boton) {
+  boton.disabled = true;
+
+  try {
+    // ¿Hay reservas futuras en este turno? Eliminarlo no las cancela.
+    const reservas = await getDocs(query(collection(db, "reservas"), where("turnoId", "==", turno.id)));
+    const futuras = reservas.docs.filter((d) => d.data().fecha >= hoyClave()).length;
+
+    let mensaje = `¿Eliminar el turno del ${turno["día"]} a las ${turno.hora}?`;
+    if (futuras > 0) {
+      mensaje += `\n\nTiene ${futuras} ${futuras === 1 ? "reserva futura" : "reservas futuras"}. ` +
+                 `Eliminar el turno no las cancela: avisales y cancelalas desde la lista de reservas.`;
+    }
+
+    if (!confirm(mensaje)) return;
+
+    await deleteDoc(doc(db, "turnos", turno.id));
+    cargarHorarios();
+  } catch (error) {
+    alert("No se pudo eliminar el turno. Intentá de nuevo.");
+    console.error(error);
+  } finally {
+    boton.disabled = false;
+  }
+}
+
+// ---------- Agregar un turno nuevo ----------
+document.getElementById("turno-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const dia = document.getElementById("turno-dia").value;
+  const hora = document.getElementById("turno-hora").value; // "09:00"
+  const cupo = Number(document.getElementById("turno-cupo").value);
+  const boton = e.target.querySelector("button[type='submit']");
+
+  if (!Number.isInteger(cupo) || cupo < 1 || cupo > 50) {
+    alert("El cupo tiene que ser un número entero entre 1 y 50.");
+    return;
+  }
+
+  // Evitar dos turnos el mismo día a la misma hora
+  if (turnosCargados.some((t) => t["día"] === dia && t.hora === hora)) {
+    alert(`Ya existe un turno el ${dia} a las ${hora}.`);
+    return;
+  }
+
+  boton.disabled = true;
+  try {
+    await addDoc(collection(db, "turnos"), { "día": dia, hora, cupoMaximo: cupo });
+    document.getElementById("turno-hora").value = "";
+    cargarHorarios();
+  } catch (error) {
+    alert("No se pudo agregar el turno. Intentá de nuevo.");
     console.error(error);
   } finally {
     boton.disabled = false;

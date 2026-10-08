@@ -27,20 +27,51 @@
         </form>
     </section>
 
-    <!-- Panel (se muestra solo con la sesión iniciada) -->
+        <!-- Panel (se muestra solo con la sesión iniciada) -->
     <section id="panel" class="admin-card" hidden>
         <div class="admin-top">
             <h1>Reservas</h1>
             <button type="button" id="btn-salir" class="btn-secundario">Cerrar sesión</button>
         </div>
         <p class="admin-sub" id="panel-usuario"></p>
-                <div class="panel-filtros">
+        <div class="panel-filtros">
             <label for="panel-fecha">Día</label>
             <input type="date" id="panel-fecha">
         </div>
         <div id="panel-contenido"></div>
 
-         <details class="panel-bloqueos">
+        <details class="panel-bloqueos panel-horarios">
+            <summary>Horarios</summary>
+            <p class="admin-sub">Los turnos fijos de cada semana. Los cambios se ven al instante en la agenda.</p>
+
+            <form id="turno-form" class="bloqueo-form">
+                <div class="bloqueo-campo">
+                    <label for="turno-dia">Día</label>
+                    <select id="turno-dia" required>
+                        <option value="Lunes">Lunes</option>
+                        <option value="Martes">Martes</option>
+                        <option value="Miércoles">Miércoles</option>
+                        <option value="Jueves">Jueves</option>
+                        <option value="Viernes">Viernes</option>
+                        <option value="Sábado">Sábado</option>
+                        <option value="Domingo">Domingo</option>
+                    </select>
+                </div>
+                <div class="bloqueo-campo">
+                    <label for="turno-hora">Hora</label>
+                    <input type="time" id="turno-hora" required>
+                </div>
+                <div class="bloqueo-campo">
+                    <label for="turno-cupo">Cupo</label>
+                    <input type="number" id="turno-cupo" min="1" max="50" value="8" required>
+                </div>
+                <button type="submit">Agregar turno</button>
+            </form>
+
+            <div id="horarios-lista"></div>
+        </details>
+
+        <details class="panel-bloqueos">
             <summary>Días sin clases</summary>
             <p class="admin-sub">Los días bloqueados no aparecen en la agenda para reservar.</p>
 
@@ -57,8 +88,10 @@
             </form>
 
             <ul id="bloqueos-lista" class="bloqueos-lista"></ul>
-         </details>
+        </details>
     </section>
+
+    
 
 </main>
 <script type="module" src="admin.js"></script>

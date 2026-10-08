@@ -241,3 +241,39 @@ button:disabled {
     flex-direction: column;
     gap: 0.5rem;
 }
+
+select {
+    padding: 0.75rem 0.9rem;
+    font-size: 1rem;
+    border: 1px solid #d6cbbf;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.panel-horarios {
+    margin-top: 1.5rem;
+}
+
+.turno-acciones {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.turno-cupo-label {
+    font-size: 0.85rem;
+    color: #6b5f57;
+}
+
+.turno-cupo {
+    width: 4.5rem;
+    padding: 0.5rem 0.6rem;
+    margin-bottom: 0;
+}
+
+.btn-chico {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
+}
