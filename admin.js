@@ -8,9 +8,12 @@ import {
   collection,
   query,
   where,
+  orderBy,
   getDocs,
   doc,
   getDoc,
+  setDoc,
+  deleteDoc,
   runTransaction
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
@@ -52,6 +55,8 @@ onAuthStateChanged(auth, async (usuario) => {
 
   inputFecha.value = hoyClave();
   cargarReservas(inputFecha.value);
+
+    cargarBloqueos();
 });
 
 // ---------- Traer las reservas de una fecha ----------
@@ -197,4 +202,113 @@ loginForm.addEventListener("submit", async (e) => {
 // ---------- Cerrar sesión ----------
 document.getElementById("btn-salir").addEventListener("click", () => {
   signOut(auth);
+});
+
+// ================= DÍAS BLOQUEADOS =================
+
+// "2026-12-25" → "viernes, 25 de diciembre"
+function formatoFecha(clave) {
+  const [anio, mes, dia] = clave.split("-").map(Number);
+  const fecha = new Date(anio, mes - 1, dia);
+  return fecha.toLocaleDateString("es-UY", { weekday: "long", day: "numeric", month: "long" });
+}
+
+// ---------- Mostrar los próximos días bloqueados ----------
+async function cargarBloqueos() {
+  const lista = document.getElementById("bloqueos-lista");
+  lista.textContent = "";
+
+  try {
+    const consulta = query(
+      collection(db, "bloqueos"),
+      where("fecha", ">=", hoyClave()),
+      orderBy("fecha")
+    );
+    const snapshot = await getDocs(consulta);
+
+    if (snapshot.empty) {
+      const vacio = document.createElement("li");
+      vacio.className = "panel-vacio";
+      vacio.textContent = "No hay días bloqueados.";
+      lista.appendChild(vacio);
+      return;
+    }
+
+    snapshot.forEach((docSnap) => {
+      const bloqueo = docSnap.data();
+
+      const li = document.createElement("li");
+      li.className = "panel-reserva";
+
+      const info = document.createElement("div");
+      info.className = "panel-reserva-info";
+
+      const fecha = document.createElement("strong");
+      fecha.textContent = formatoFecha(bloqueo.fecha);
+      info.appendChild(fecha);
+
+      if (bloqueo.motivo) {
+        const motivo = document.createElement("span");
+        motivo.textContent = bloqueo.motivo;
+        info.appendChild(motivo);
+      }
+
+      const boton = document.createElement("button");
+      boton.type = "button";
+      boton.className = "btn-cancelar";
+      boton.textContent = "Desbloquear";
+      boton.addEventListener("click", async () => {
+        boton.disabled = true;
+        try {
+          await deleteDoc(doc(db, "bloqueos", docSnap.id));
+          cargarBloqueos();
+        } catch (error) {
+          alert("No se pudo desbloquear el día. Intentá de nuevo.");
+          console.error(error);
+          boton.disabled = false;
+        }
+      });
+
+      li.append(info, boton);
+      lista.appendChild(li);
+    });
+  } catch (error) {
+    lista.textContent = "No se pudieron cargar los días bloqueados.";
+    console.error(error);
+  }
+}
+
+// ---------- Bloquear un día ----------
+document.getElementById("bloqueo-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const fecha = document.getElementById("bloqueo-fecha").value;
+  const motivo = document.getElementById("bloqueo-motivo").value.trim();
+  const boton = e.target.querySelector("button[type='submit']");
+  if (!fecha) return;
+
+  boton.disabled = true;
+
+  try {
+    // ¿Ya hay reservas ese día? Bloquear no las cancela, así que avisamos.
+    const reservas = await getDocs(query(collection(db, "reservas"), where("fecha", "==", fecha)));
+    if (!reservas.empty) {
+      const seguir = confirm(
+        `Ese día ya tiene ${reservas.size} ${reservas.size === 1 ? "reserva" : "reservas"}.\n` +
+        `Bloquearlo no las cancela: vas a tener que avisarles y cancelarlas desde la lista.\n\n` +
+        `¿Bloquear igual?`
+      );
+      if (!seguir) return;
+    }
+
+    // La fecha es el id del documento: bloquear dos veces el mismo día no lo duplica
+    await setDoc(doc(db, "bloqueos", fecha), { fecha, motivo });
+    e.target.reset();
+    cargarBloqueos();
+  } catch (error) {
+    alert("No se pudo bloquear el día. Intentá de nuevo.");
+    console.error(error);
+  } finally {
+    boton.disabled = false;
+  }
 });

@@ -12,6 +12,7 @@ let turnoSeleccionado = null;
 let turnosPorDia = {}; // fuente única de datos, compartida entre agenda y modal
 let cargaInicial = null; // promesa compartida de la primera consulta a Firestore
 let ocupacion = {}; // cupos ocupados por fecha: { "2026-10-13_idTurno": 3 }
+let bloqueos = new Set(); // fechas bloqueadas: "2026-12-25", ...
 
 function getEstadoSpots(libres) {
   if (libres <= 0) return { clase: "full", texto: "Completo" };
@@ -28,6 +29,21 @@ function aClaveFecha(fecha) {
   return `${fecha.getFullYear()}-${mes}-${dia}`;
 }
 
+// ---------- Días bloqueados (feriados, vacaciones) ----------
+async function cargarBloqueos() {
+  bloqueos = new Set();
+
+  const consulta = query(
+    collection(db, "bloqueos"),
+    where("fecha", ">=", aClaveFecha(new Date()))
+  );
+
+  const snapshot = await getDocs(consulta);
+  snapshot.forEach((docSnap) => {
+    bloqueos.add(docSnap.data().fecha);
+  });
+}
+
 // Devuelve los próximos días que tienen clases (por defecto, 6: una semana)
 function proximasFechas(cantidad = 6) {
   const fechas = [];
@@ -37,11 +53,14 @@ function proximasFechas(cantidad = 6) {
     const fecha = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + i);
     const nombre = NOMBRES_DIAS[fecha.getDay()];
 
-    if (!turnosPorDia[nombre]) continue; // ese día no hay clases (domingo)
+        if (!turnosPorDia[nombre]) continue; // ese día no hay clases (domingo)
 
-    fechas.push({
-      clave: aClaveFecha(fecha),                         // "2026-10-13"
-      nombre,                                            // "Lunes"
+    const clave = aClaveFecha(fecha);
+    if (bloqueos.has(clave)) continue;   // día bloqueado por el estudio
+
+        fechas.push({
+      clave,                                               // "2026-10-13"
+      nombre,                                              // "Lunes"
       etiqueta: `${nombre.slice(0, 3)} ${fecha.getDate()}` // "Lun 13"
     });
   }
@@ -97,6 +116,7 @@ async function cargarTurnosDesdeFirestore() {
     turnosPorDia[dia].sort((a, b) => a.hora.localeCompare(b.hora));
   });
 
+  await cargarBloqueos();
   const fechas = proximasFechas();
   await cargarOcupacion(fechas);
 }

@@ -39,6 +39,25 @@
             <input type="date" id="panel-fecha">
         </div>
         <div id="panel-contenido"></div>
+
+         <details class="panel-bloqueos">
+            <summary>Días sin clases</summary>
+            <p class="admin-sub">Los días bloqueados no aparecen en la agenda para reservar.</p>
+
+            <form id="bloqueo-form" class="bloqueo-form">
+                <div class="bloqueo-campo">
+                    <label for="bloqueo-fecha">Fecha</label>
+                    <input type="date" id="bloqueo-fecha" required>
+                </div>
+                <div class="bloqueo-campo">
+                    <label for="bloqueo-motivo">Motivo (opcional)</label>
+                    <input type="text" id="bloqueo-motivo" maxlength="60" placeholder="Ej: Feriado">
+                </div>
+                <button type="submit">Bloquear día</button>
+            </form>
+
+            <ul id="bloqueos-lista" class="bloqueos-lista"></ul>
+         </details>
     </section>
 
 </main>

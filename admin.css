@@ -5,26 +5,37 @@
 body {
     min-height: 100vh;
     font-family: system-ui, -apple-system, sans-serif;
-    background: #77836A;;
+    background-color: #77836A;
+    background-image:
+        linear-gradient(rgba(43, 36, 32, 0.45), rgba(43, 36, 32, 0.45)),
+        url("img/hero1.png");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
     color: #2b2420;
 }
 
 .admin {
+    min-height: 100vh;
     max-width: 960px;
     margin: 0 auto;
     padding: 3rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .admin-card {
-    background: #fff;
+    background: #ffffff9c;
     border: 1px solid #e6ddd2;
     border-radius: 16px;
     padding: 2rem;
 }
 
 #login {
+    width: 100%;
     max-width: 400px;
-    margin: 4rem auto 0;
+    margin: 0 auto;
 }
 
 h1 {
@@ -164,4 +175,69 @@ button:disabled {
 
 .btn-cancelar:hover {
     background: #fdf0ef;
+}
+
+.panel-bloqueos {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e6ddd2;
+}
+
+.panel-bloqueos summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;              /* saca el triangulito del navegador */
+    padding: 0.25rem 0;
+}
+
+.panel-bloqueos summary::-webkit-details-marker {
+    display: none;                 /* lo mismo para Safari */
+}
+
+.panel-bloqueos summary::after {
+    content: "›";
+    font-size: 1.6rem;
+    font-weight: 400;
+    line-height: 1;
+    color: #7a3e2a;
+    transform: rotate(90deg);
+    transition: transform 0.25s ease;
+}
+
+.panel-bloqueos[open] summary::after {
+    transform: rotate(-90deg);
+}
+
+.panel-bloqueos[open] summary {
+    margin-bottom: 0.8rem;
+}
+
+.bloqueo-form {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.bloqueo-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    flex: 1 1 180px;
+}
+
+.bloqueo-campo input {
+    margin-bottom: 0;
+}
+
+.bloqueos-lista {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
