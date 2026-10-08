@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Panel — Espacio Pilates</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<main class="admin">
+
+    <!-- Login -->
+    <section id="login" class="admin-card">
+        <h1>Panel del estudio</h1>
+        <p class="admin-sub">Ingresá con tu cuenta de administrador.</p>
+
+        <form id="login-form">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" autocomplete="username" required>
+
+            <label for="login-password">Contraseña</label>
+            <input type="password" id="login-password" autocomplete="current-password" required>
+
+            <p class="admin-error" id="login-error" role="alert"></p>
+            <button type="submit">Ingresar</button>
+        </form>
+    </section>
+
+    <!-- Panel (se muestra solo con la sesión iniciada) -->
+    <section id="panel" class="admin-card" hidden>
+        <div class="admin-top">
+            <h1>Reservas</h1>
+            <button type="button" id="btn-salir" class="btn-secundario">Cerrar sesión</button>
+        </div>
+        <p class="admin-sub" id="panel-usuario"></p>
+        <div id="panel-contenido"></div>
+    </section>
+
+</main>
+<script type="module" src="admin.js"></script>
+</body>
+</html>

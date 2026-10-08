@@ -1,0 +1,99 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+[hidden] { display: none !important; }
+
+body {
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #77836A;;
+    color: #2b2420;
+}
+
+.admin {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 3rem 1.25rem;
+}
+
+.admin-card {
+    background: #fff;
+    border: 1px solid #e6ddd2;
+    border-radius: 16px;
+    padding: 2rem;
+}
+
+#login {
+    max-width: 400px;
+    margin: 4rem auto 0;
+}
+
+h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+}
+
+.admin-sub {
+    color: #6b5f57;
+    margin-bottom: 1.5rem;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+label {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+input {
+    padding: 0.75rem 0.9rem;
+    font-size: 1rem;
+    border: 1px solid #d6cbbf;
+    border-radius: 10px;
+    margin-bottom: 0.6rem;
+}
+
+input:focus {
+    outline: 2px solid #7a3e2a;
+    outline-offset: 1px;
+}
+
+button {
+    padding: 0.8rem 1.2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    background: #7a3e2a;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.btn-secundario {
+    color: #7a3e2a;
+    background: transparent;
+    border: 1px solid #7a3e2a;
+}
+
+.admin-error {
+    min-height: 1.2rem;
+    font-size: 0.9rem;
+    color: #b42318;
+}
+
+.admin-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
