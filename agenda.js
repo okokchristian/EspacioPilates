@@ -324,6 +324,7 @@ async function confirmarReserva(datosPersona) {
       creado: new Date().toISOString()
     });
   });
+  return reservaRef.id;
 }
 
 // ---------- Validaciones del formulario ----------
@@ -412,9 +413,16 @@ document.getElementById("btn-cerrar-exito").addEventListener("click", () => {
     submitBtn.disabled = true;
     submitBtn.textContent = "Reservando...";
 
-    try {
-      await confirmarReserva(datosPersona);
+        try {
+      const reservaId = await confirmarReserva(datosPersona);
       mostrarPasoExito();
+
+      // Pedir el mail de confirmación
+      fetch("/.netlify/functions/confirmar-reserva", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservaId })
+      }).catch((error) => console.error("No se pudo pedir el mail:", error));
     } catch (error) {
       const mensaje = error.code === "permission-denied"
         ? "Ese turno ya no está disponible. Recargá la página para ver los horarios actualizados."
