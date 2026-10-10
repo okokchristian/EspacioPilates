@@ -75,7 +75,7 @@ export default async () => {
 
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 480px; color: #2b2420;">
-        <h2 style="margin-bottom: 4px;">¡Mañana tenés clase!</h2>
+        <h2 style="margin-bottom: 4px;">¡Mañana tenés clase de Pilates!</h2>
         <p>Hola ${escaparHTML(reserva.nombre)}, te recordamos tu clase en ${ESTUDIO.nombre}.</p>
         <table style="margin: 16px 0; border-collapse: collapse;">
           <tr><td style="padding: 4px 12px 4px 0; color: #6b5f57;">Día</td><td><strong>${fecha}</strong></td></tr>
