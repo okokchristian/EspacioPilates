@@ -415,11 +415,12 @@ document.getElementById("btn-cerrar-exito").addEventListener("click", () => {
     submitBtn.disabled = true;
     submitBtn.textContent = "Reservando...";
 
-        try {
+      try {
       const reservaId = await confirmarReserva(datosPersona);
-      mostrarPasoExito();
+      mostrarPasoExito(reservaId);
 
       // Pedir el mail de confirmación
+
       fetch("/.netlify/functions/confirmar-reserva", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
