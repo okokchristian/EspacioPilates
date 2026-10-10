@@ -454,7 +454,6 @@
 }
 
 #btn-volver-turnos{
-  margin-right:0.8rem;
   background-color: var(--line);
   color: var(--bone-light);
 }

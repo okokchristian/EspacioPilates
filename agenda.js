@@ -13,6 +13,7 @@ let turnosPorDia = {}; // fuente única de datos, compartida entre agenda y moda
 let cargaInicial = null; // promesa compartida de la primera consulta a Firestore
 let ocupacion = {}; // cupos ocupados por fecha: { "2026-10-13_idTurno": 3 }
 let bloqueos = new Set(); // fechas bloqueadas: "2026-12-25", ...
+let fechaElegida = null; // día elegido en la agenda, ej: "2026-10-12"
 
 function getEstadoSpots(libres) {
   if (libres <= 0) return { clase: "full", texto: "Completo" };
@@ -138,26 +139,31 @@ async function cargarTurnos() {
     tabsContainer.innerHTML = "";
     const fechas = proximasFechas();
 
+    // Si ya había un día elegido y sigue disponible, lo mantenemos
+    let indiceInicial = fechas.findIndex((f) => f.clave === fechaElegida);
+    if (indiceInicial === -1) indiceInicial = 0;
+
     fechas.forEach((fecha, index) => {
       const tab = document.createElement("button");
-      tab.className = `agenda-tab ${index === 0 ? "active" : ""}`;
+      tab.className = `agenda-tab ${index === indiceInicial ? "active" : ""}`;
       tab.textContent = fecha.etiqueta;
       tab.addEventListener("click", () => {
         document.querySelectorAll(".agenda-tab").forEach((t) => t.classList.remove("active"));
         tab.classList.add("active");
+        fechaElegida = fecha.clave; // recordamos el día para el modal
         pintarHorariosDia(fecha);
       });
       tabsContainer.appendChild(tab);
     });
 
     if (fechas.length > 0) {
-      pintarHorariosDia(fechas[0]);
+      pintarHorariosDia(fechas[indiceInicial]);
     } else {
       horariosContainer.innerHTML = "<p>No hay turnos cargados.</p>";
     }
   } catch (error) {
     horariosContainer.innerHTML = "<p>No se pudieron cargar los turnos. Intentá recargar la página.</p>";
-    console.error("Error cargando turnos:", error);
+      console.error("Error cargando turnos:", error);
   }
 }
 
@@ -165,7 +171,7 @@ function pintarHorariosDia(fecha) {
   const horariosContainer = document.getElementById("agenda-horarios");
   horariosContainer.innerHTML = "";
 
-    turnosPorDia[fecha.nombre].forEach((turno) => {
+  turnosPorDia[fecha.nombre].forEach((turno) => {
     const libres = turno.cupoMaximo - reservadosEn(fecha, turno);
     const estado = yaPaso(fecha, turno)
       ? { clase: "full", texto: "Finalizado" }
@@ -182,6 +188,10 @@ function pintarHorariosDia(fecha) {
 }
 
 // ---------- Pintar el modal, REUSANDO turnosPorDia (sin nueva consulta) ----------
+
+
+
+// ---------- Pintar el modal, REUSANDO turnosPorDia (sin nueva consulta) ----------
 function pintarModal() {
   const tabsContainer = document.getElementById("modal-tabs");
   const lista = document.getElementById("modal-turnos-list");
@@ -189,21 +199,26 @@ function pintarModal() {
   tabsContainer.innerHTML = "";
   const fechas = proximasFechas();
 
+  // El modal arranca en el día elegido en la agenda (o en el primero)
+  let indiceInicial = fechas.findIndex((f) => f.clave === fechaElegida);
+  if (indiceInicial === -1) indiceInicial = 0;
+
   fechas.forEach((fecha, index) => {
     const tab = document.createElement("button");
     tab.type = "button";
-    tab.className = `modal-tab ${index === 0 ? "active" : ""}`;
+    tab.className = `modal-tab ${index === indiceInicial ? "active" : ""}`;
     tab.textContent = fecha.etiqueta;
     tab.addEventListener("click", () => {
       document.querySelectorAll(".modal-tab").forEach((t) => t.classList.remove("active"));
       tab.classList.add("active");
+      fechaElegida = fecha.clave;
       pintarTurnosModalDia(fecha);
     });
     tabsContainer.appendChild(tab);
   });
 
   if (fechas.length > 0) {
-    pintarTurnosModalDia(fechas[0]);
+    pintarTurnosModalDia(fechas[indiceInicial]);
   } else {
     lista.innerHTML = "<p>No hay turnos cargados.</p>";
   }
