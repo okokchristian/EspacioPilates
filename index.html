@@ -117,10 +117,9 @@
         </div>
       </div>
 
-      <div class="footer-bottom">
-        <p>&copy; 2026 Espacio Pilates.</p>
+              <div class="footer-bottom">
+        <p>&copy; 2026 Espacio Pilates | <a href="privacidad.html" class="footer-legal">Política de privacidad</a></p>
       </div>
-    </div>
   </footer>
 
   <!-------------------------TURNOS DE ESTA SEMANA---------------------------------->
@@ -161,9 +160,17 @@
     <span class="input-error" id="error-email"></span>
   </div>
 
-  <div class="input-group">
+    <div class="input-group">
     <input type="text" id="input-telefono" placeholder="Teléfono (ej: 099123456)">
     <span class="input-error" id="error-telefono"></span>
+  </div>
+
+  <div class="input-group">
+    <label class="check-privacidad">
+      <input type="checkbox" id="input-privacidad">
+      <span>Acepto la <a href="privacidad.html" target="_blank" rel="noopener">política de privacidad</a></span>
+    </label>
+    <span class="input-error" id="error-privacidad"></span>
   </div>
 
   <button type="button" class="btn-secondary" id="btn-volver-turnos">Atrás</button>
@@ -173,7 +180,7 @@
 
             <div class="modal-step" id="modal-step-exito" style="display:none;">
         <h2>¡Reserva confirmada!</h2>
-        <p>Te esperamos en tu clase. Te llegará la confirmación por email o WhatsApp.</p>
+        <p>Te esperamos en tu clase. Te enviamos la confirmación a tu email. Si no la ves, revisá la carpeta de spam.</p>
         <p class="modal-cancelar-texto">
           ¿No podés venir? Podés cancelar hasta 2 horas antes desde
           <a id="link-cancelar" href="#" target="_blank" rel="noopener">este link</a>.
@@ -182,11 +189,10 @@
         <button type="button" class="btn-primary" id="btn-cerrar-exito">Cerrar</button>
       </div>
 
+       </div>
+  </div>
+
   <script type="module" src="js/agenda.js"></script>
 
 </body>
 </html>
-
-
-<!---------link archivo google sheets para ver reservas: 
-https://docs.google.com/spreadsheets/d/12SudjZbBVsFz2ZkdhA8JsCXthdH2wxQzzVcoLCSbZzM/edit?gid=0#gid=0 -->
