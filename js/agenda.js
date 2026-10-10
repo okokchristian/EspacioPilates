@@ -338,7 +338,8 @@ async function confirmarReserva(datosPersona) {
       apellido: datosPersona.apellido,
       email: datosPersona.email,
       telefono: datosPersona.telefono,
-      creado: new Date().toISOString()
+      creado: new Date().toISOString(),
+      privacidadAceptada: new Date().toISOString() // constancia del consentimiento
     });
   });
   return reservaRef.id;
