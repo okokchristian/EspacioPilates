@@ -76,8 +76,10 @@ export default async (req) => {
       return new Response("Reserva demasiado antigua", { status: 200 });
     }
 
-    // 4. Armar el mail
+        // 4. Armar el mail
     const fecha = fechaLarga(reserva.fecha);
+    // Link para que el alumno cancele (usa la misma dirección del sitio)
+    const linkCancelar = `${new URL(req.url).origin}/cancelar.html?id=${encodeURIComponent(reservaId)}`;
     const html = `
       <div style="font-family: Arial, sans-serif; max-width: 480px; color: #2b2420;">
         <h2 style="margin-bottom: 4px;">¡Tu clase está reservada!</h2>
@@ -87,7 +89,11 @@ export default async (req) => {
           <tr><td style="padding: 4px 12px 4px 0; color: #6b5f57;">Hora</td><td><strong>${escaparHTML(reserva.hora)}</strong></td></tr>
           <tr><td style="padding: 4px 12px 4px 0; color: #6b5f57;">Dónde</td><td>${ESTUDIO.direccion}</td></tr>
         </table>
-        <p style="color: #6b5f57; font-size: 14px;">Si no podés venir, avisanos así liberamos tu lugar para otra persona.</p>
+        <p style="color: #6b5f57; font-size: 14px;">
+          Si no podés venir, podés cancelar hasta 2 horas antes
+          <a href="${linkCancelar}" style="color: #7a3e2b;">desde este link</a>
+          y tu lugar queda libre para otra persona.
+        </p>
       </div>
     `;
 

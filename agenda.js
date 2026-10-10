@@ -260,10 +260,12 @@ function mostrarPasoForm() {
   `${turnoSeleccionado.fechaTexto} — ${turnoSeleccionado.hora}`;
 }
 
-function mostrarPasoExito() {
+function mostrarPasoExito(reservaId) {
   document.getElementById("modal-step-turnos").style.display = "none";
   document.getElementById("modal-step-form").style.display = "none";
   document.getElementById("modal-step-exito").style.display = "block";
+  document.getElementById("link-cancelar").href =
+    `/cancelar.html?id=${encodeURIComponent(reservaId)}`;
 }
 
 async function abrirModal() {

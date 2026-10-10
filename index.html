@@ -171,13 +171,16 @@
 </form>
       </div>
 
-      <div class="modal-step" id="modal-step-exito" style="display:none;">
+            <div class="modal-step" id="modal-step-exito" style="display:none;">
         <h2>¡Reserva confirmada!</h2>
         <p>Te esperamos en tu clase. Te llegará la confirmación por email o WhatsApp.</p>
+        <p class="modal-cancelar-texto">
+          ¿No podés venir? Podés cancelar hasta 2 horas antes desde
+          <a id="link-cancelar" href="#" target="_blank" rel="noopener">este link</a>.
+          Guardalo por las dudas.
+        </p>
         <button type="button" class="btn-primary" id="btn-cerrar-exito">Cerrar</button>
       </div>
-    </div>
-  </div>
 
   <script type="module" src="agenda.js"></script>
 
