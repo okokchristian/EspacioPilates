@@ -8,7 +8,7 @@ body {
     background-color: #77836A;
     background-image:
         linear-gradient(rgba(43, 36, 32, 0.45), rgba(43, 36, 32, 0.45)),
-        url("img/hero1.png");
+        url("../img/hero1.png");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
