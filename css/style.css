@@ -455,7 +455,7 @@
 
 #btn-volver-turnos{
   background-color: var(--line);
-  color: var(--bone-light);
+  color: var(--ink); /*antes var(--bone-light): texto oscuro, se lee mejor*/
 }
 
   .modal-tabs{ 
