@@ -369,11 +369,15 @@ function validarFormulario(datos) {
     errores.telefono = "Ingresá un celular uruguayo válido (ej: 099123456).";
   }
 
+  if (!datos.privacidad) {
+    errores.privacidad = "Tenés que aceptar la política de privacidad.";
+  }
+
   return errores;
 }
 
 function mostrarErrores(errores) {
-  ["nombre", "apellido", "email", "telefono"].forEach((campo) => {
+  ["nombre", "apellido", "email", "telefono", "privacidad"].forEach((campo) => {
     const spanError = document.getElementById(`error-${campo}`);
     const input = document.getElementById(`input-${campo}`);
     if (errores[campo]) {
@@ -413,11 +417,12 @@ document.getElementById("btn-cerrar-exito").addEventListener("click", () => {
   document.getElementById("reserva-form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const datosPersona = {
+      const datosPersona = {
       nombre: document.getElementById("input-nombre").value.trim(),
       apellido: document.getElementById("input-apellido").value.trim(),
       email: document.getElementById("input-email").value.trim(),
-      telefono: document.getElementById("input-telefono").value.trim()
+      telefono: document.getElementById("input-telefono").value.trim(),
+      privacidad: document.getElementById("input-privacidad").checked
     };
 
     const errores = validarFormulario(datosPersona);

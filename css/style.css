@@ -713,3 +713,108 @@
   accent-color:var(--rust-dark);
   cursor:pointer;
 }
+
+/*==================== AJUSTES HERO + TURNOS EN UNA PANTALLA ====================*/
+
+/*--- navbar ---*/
+.nav{
+  padding-top:1.5rem;
+}
+
+.nav-cta{ /*botón Reservar, mismo color que Reservar clase*/
+  background:var(--rust-dark);
+}
+
+.nav-cta:hover{
+  background:var(--ink);
+}
+
+/*--- hero ---*/
+.hero{
+  padding:2rem 2rem 0.5rem;
+  grid-template-columns:1fr;
+  align-items:start;
+}
+
+.hero-copy h1{ /*ejercicio con precisión*/
+  font-size:clamp(2.8rem, 3.8vw, 3.4rem);
+  margin-top:0;
+  margin-bottom:1.3rem;
+}
+
+.hero-copy p{ /*clases de reformer en grupos reducidos...*/
+  font-size:1rem;
+  line-height:1.55;
+  max-width:46ch;
+  margin-bottom:0;
+}
+
+.hero-side{
+  justify-self:start;
+  margin-top:1.4rem; /*espacio entre el párrafo y los números*/
+}
+
+.hero-meta{ /*8 camas, 50 minutos, 6 días*/
+  flex-direction:row;
+  gap:2rem;
+}
+
+.hero-meta div{
+  gap:0;
+}
+
+.hero-meta .num{
+  font-size:1.8rem;
+  line-height:1.2;
+}
+
+.hero-meta .lbl{
+  font-size:0.9rem;
+  text-shadow:0 1px 8px rgba(0,0,0,0.7); /*se lee mejor sobre el video*/
+}
+
+.scroll-hint{
+  display:none;
+}
+
+/*--- turnos de esta semana ---*/
+.agenda{
+  padding:1rem 2rem 3rem;
+}
+
+.agenda-inner{
+  max-width:calc(1200px - 4rem); /*alineado con el título del hero*/
+}
+
+.agenda-header{
+  margin-bottom:1rem;
+}
+
+.agenda-header h2{
+  font-size:1.8rem;
+}
+
+.agenda-header p{ /*frase repetida*/
+  display:none;
+}
+
+.agenda-tabs{
+  margin-bottom:1.2rem;
+}
+
+.horario-item .spots{ /*etiqueta "8 lugares" del tamaño del texto*/
+  align-self:flex-start;
+}
+
+.hero-actions{ /*línea + botón Reservar clase*/
+  margin-top:1.5rem;
+  padding-top:1.5rem;
+}
+
+/*--- celular: horarios de a 2 por fila ---*/
+@media (max-width:480px){
+  .agenda-horarios{
+    grid-template-columns:repeat(2, 1fr);
+    gap:0.8rem;
+  }
+}
