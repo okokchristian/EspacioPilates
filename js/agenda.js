@@ -2,8 +2,6 @@ import { db } from "./firebase.js";
 import {
   collection,
   getDocs,
-  doc,
-  runTransaction,
   query,
   where,
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
@@ -188,10 +186,6 @@ function pintarHorariosDia(fecha) {
 }
 
 // ---------- Pintar el modal, REUSANDO turnosPorDia (sin nueva consulta) ----------
-
-
-
-// ---------- Pintar el modal, REUSANDO turnosPorDia (sin nueva consulta) ----------
 function pintarModal() {
   const tabsContainer = document.getElementById("modal-tabs");
   const lista = document.getElementById("modal-turnos-list");
@@ -305,44 +299,51 @@ function cerrarModal() {
   turnoSeleccionado = null;
 }
 
-// ---------- Confirmar reserva (suma el cupo de esa fecha con transacción segura) ----------
+// ---------- Confirmar reserva (la crea el servidor, no el navegador) ----------
+const MENSAJES_ERROR = {
+  "datos-invalidos": "Revisá los datos del formulario e intentá de nuevo.",
+  "fecha-invalida": "Esa fecha no está disponible. Elegí otro turno.",
+  "turno-no-existe": "Ese turno ya no existe. Recargá la página para ver los horarios actualizados.",
+  "dia-bloqueado": "Ese día no hay clases. Elegí otro día.",
+  "turno-pasado": "Esa clase ya empezó. Elegí otro horario.",
+  "sin-lugar": "Ese turno se acaba de llenar. Elegí otro horario.",
+  "ya-reservaste-ese-dia": "Ya tenés una reserva para ese día. Solo se puede reservar una clase por día.",
+  "limite-reservas": "Ya tenés 3 reservas próximas. Vas a poder reservar de nuevo cuando pase alguna de esas clases.",
+};
+
 async function confirmarReserva(datosPersona) {
   const turno = turnoSeleccionado;
-  const ocupacionRef = doc(db, "ocupacion", `${turno.fecha}_${turno.id}`);
-  const reservaRef = doc(collection(db, "reservas")); // documento nuevo, con id automático
 
-  await runTransaction(db, async (transaction) => {
-    const ocupacionDoc = await transaction.get(ocupacionRef);
-    const reservados = ocupacionDoc.exists() ? ocupacionDoc.data().reservados : 0;
-
-    if (reservados >= turno.cupoMaximo) {
-      throw new Error("Este turno ya no tiene lugares disponibles.");
-    }
-
-    // Primera reserva de esa clase en esa fecha: se crea el contador.
-    // Si ya existe, se le suma 1.
-    if (ocupacionDoc.exists()) {
-      transaction.update(ocupacionRef, { reservados: reservados + 1 });
-    } else {
-      transaction.set(ocupacionRef, { fecha: turno.fecha, turnoId: turno.id, reservados: 1 });
-    }
-
-    // La reserva se guarda en la MISMA transacción:
-    // o se guardan las dos cosas, o ninguna.
-    transaction.set(reservaRef, {
+  const respuesta = await fetch("/.netlify/functions/crear-reserva", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
       turnoId: turno.id,
       fecha: turno.fecha,
-      día: turno.día,
-      hora: turno.hora,
       nombre: datosPersona.nombre,
       apellido: datosPersona.apellido,
       email: datosPersona.email,
       telefono: datosPersona.telefono,
-      creado: new Date().toISOString(),
-      privacidadAceptada: new Date().toISOString() // constancia del consentimiento
-    });
+      privacidad: datosPersona.privacidad,
+    }),
   });
-  return reservaRef.id;
+
+  let resultado = {};
+  try {
+    resultado = await respuesta.json();
+  } catch {
+    // si el servidor no respondió con JSON, cae en el error genérico de abajo
+  }
+
+  if (!respuesta.ok || !resultado.ok) {
+    const error = new Error(
+      MENSAJES_ERROR[resultado.error] || "Hubo un error al confirmar la reserva. Intentá de nuevo."
+    );
+    error.codigo = resultado.error;
+    throw error;
+  }
+
+  return resultado.reservaId;
 }
 
 // ---------- Validaciones del formulario ----------
@@ -414,10 +415,10 @@ document.getElementById("btn-cerrar-exito").addEventListener("click", () => {
     cargarTurnos();
 });
 
-  document.getElementById("reserva-form").addEventListener("submit", async (e) => {
+    document.getElementById("reserva-form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
-      const datosPersona = {
+    const datosPersona = {
       nombre: document.getElementById("input-nombre").value.trim(),
       apellido: document.getElementById("input-apellido").value.trim(),
       email: document.getElementById("input-email").value.trim(),
@@ -436,23 +437,19 @@ document.getElementById("btn-cerrar-exito").addEventListener("click", () => {
     submitBtn.disabled = true;
     submitBtn.textContent = "Reservando...";
 
-      try {
+    try {
       const reservaId = await confirmarReserva(datosPersona);
       mostrarPasoExito(reservaId);
-
-      // Pedir el mail de confirmación
-
-      fetch("/.netlify/functions/confirmar-reserva", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reservaId })
-      }).catch((error) => console.error("No se pudo pedir el mail:", error));
+      // El mail ahora lo manda el servidor al crear la reserva
     } catch (error) {
-      const mensaje = error.code === "permission-denied"
-        ? "Ese turno ya no está disponible. Recargá la página para ver los horarios actualizados."
-        : (error.message || "Hubo un error al confirmar la reserva. Intentá de nuevo.");
-      alert(mensaje);      
+      alert(error.message);
       console.error(error);
+
+      // Si el turno se llenó, recargamos los cupos para mostrar la info real
+      if (error.codigo === "sin-lugar") {
+        cargaInicial = null;
+        cargarTurnos();
+      }
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = "Confirmar reserva";
