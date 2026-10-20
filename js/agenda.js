@@ -269,12 +269,30 @@ function mostrarPasoForm() {
   `${turnoSeleccionado.fechaTexto} — ${turnoSeleccionado.hora}`;
 }
 
-function mostrarPasoExito(reservaId) {
+function mostrarPasoExito(resultado) {
   document.getElementById("modal-step-turnos").style.display = "none";
   document.getElementById("modal-step-form").style.display = "none";
   document.getElementById("modal-step-exito").style.display = "block";
-  document.getElementById("link-cancelar").href =
-    `/cancelar.html?id=${encodeURIComponent(reservaId)}`;
+
+  const titulo = document.getElementById("exito-titulo");
+  const texto = document.getElementById("exito-texto");
+  const bloqueCancelar = document.getElementById("exito-cancelar");
+
+  if (resultado.estado === "pendiente") {
+    // Con verificación: la reserva todavía no está hecha
+    titulo.textContent = "¡Ya casi! Revisá tu mail";
+    texto.textContent =
+      "Te mandamos un mail para confirmar tu reserva. Tocá el botón del mail en los próximos 30 minutos para guardar tu lugar. Si no lo ves, revisá la carpeta de spam.";
+    bloqueCancelar.style.display = "none";
+  } else {
+    // Sin verificación: la reserva ya quedó hecha
+    titulo.textContent = "¡Reserva confirmada!";
+    texto.textContent =
+      "Te esperamos en tu clase. Te enviamos la confirmación a tu email. Si no la ves, revisá la carpeta de spam.";
+    bloqueCancelar.style.display = "block";
+    document.getElementById("link-cancelar").href =
+      `/cancelar.html?id=${encodeURIComponent(resultado.reservaId)}`;
+  }
 }
 
 async function abrirModal() {
@@ -309,6 +327,8 @@ const MENSAJES_ERROR = {
   "sin-lugar": "Ese turno se acaba de llenar. Elegí otro horario.",
   "ya-reservaste-ese-dia": "Ya tenés una reserva para ese día. Solo se puede reservar una clase por día.",
   "limite-reservas": "Ya tenés 3 reservas próximas. Vas a poder reservar de nuevo cuando pase alguna de esas clases.",
+  "confirmacion-pendiente": "Ya te mandamos un mail para confirmar una reserva de ese día. Revisá tu correo (y la carpeta de spam).",
+  "mail-no-enviado": "No pudimos mandarte el mail de confirmación. Revisá que el email esté bien escrito e intentá de nuevo.",
 };
 
 async function confirmarReserva(datosPersona) {
@@ -343,7 +363,7 @@ async function confirmarReserva(datosPersona) {
     throw error;
   }
 
-  return resultado.reservaId;
+    return resultado; // { estado: "confirmada", reservaId } o { estado: "pendiente" }
 }
 
 // ---------- Validaciones del formulario ----------
@@ -438,8 +458,8 @@ document.getElementById("btn-cerrar-exito").addEventListener("click", () => {
     submitBtn.textContent = "Reservando...";
 
     try {
-      const reservaId = await confirmarReserva(datosPersona);
-      mostrarPasoExito(reservaId);
+      const resultado = await confirmarReserva(datosPersona);
+      mostrarPasoExito(resultado);
       // El mail ahora lo manda el servidor al crear la reserva
     } catch (error) {
       alert(error.message);

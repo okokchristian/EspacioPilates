@@ -1,13 +1,15 @@
 // ================= CREAR RESERVA (todo pasa por el servidor) =================
 // La página manda los datos del formulario. Esta función:
 //   1. valida los datos (no confía en el navegador)
-//   2. revisa que el turno exista, que la fecha sea válida y no esté bloqueada
-//   3. aplica el límite por persona (email y teléfono)
-//   4. guarda la reserva y suma el cupo en una transacción
-//   5. manda el mail de confirmación
+//   2. aplica el límite por persona (email y teléfono)
+//   3. revisa turno, fecha, bloqueo y cupo
+//   4a. Si VERIFICAR_EMAIL = "true": guarda una reserva PENDIENTE y manda
+//       un mail para confirmarla (no ocupa lugar hasta que se confirme)
+//   4b. Si no: crea la reserva directamente y manda el mail de confirmación
 
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { randomBytes } from "node:crypto";
 
 if (getApps().length === 0) {
   initializeApp({
@@ -26,7 +28,9 @@ const ESTUDIO = {
   direccion: "La Cumparsita 1475, Palermo, Montevideo",
   remitente: "Espacio Pilates <onboarding@resend.dev>",
 };
-const MAX_RESERVAS_ACTIVAS = 3; // reservas futuras por persona
+const VERIFICAR_EMAIL = process.env.VERIFICAR_EMAIL === "true";
+const MINUTOS_PARA_CONFIRMAR = 30;
+const MAX_RESERVAS_ACTIVAS = 3; // reservas futuras por persona (incluye pendientes)
 const DIAS_HACIA_ADELANTE = 14; // hasta cuántos días se puede reservar
 const NOMBRES_DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
@@ -68,7 +72,7 @@ function diasEntre(desde, hasta) {
   return Math.round((Date.parse(hasta) - Date.parse(desde)) / 86400000);
 }
 
-// Normalizar para comparar: "Ana@Mail.com " → "ana@mail.com", "+598 099 123 456" → "99123456"
+// "Ana@Mail.com " → "ana@mail.com"   |   "+598 099 123 456" → "99123456"
 function normalizarEmail(email) {
   return email.trim().toLowerCase();
 }
@@ -92,10 +96,44 @@ function validar(d) {
   );
 }
 
-// Cuenta las reservas futuras de una persona (por email o por teléfono)
+// Reservas futuras de una persona
 async function reservasActivas(campo, valor, hoy) {
   const snapshot = await db.collection("reservas").where(campo, "==", valor).get();
   return snapshot.docs.map((d) => d.data()).filter((r) => r.fecha >= hoy);
+}
+
+// Pendientes que todavía no vencieron
+async function pendientesVigentes(campo, valor) {
+  const snapshot = await db.collection("pendientes").where(campo, "==", valor).get();
+  const ahora = Date.now();
+  return snapshot.docs.map((d) => d.data()).filter((p) => new Date(p.expira).getTime() > ahora);
+}
+
+// Revisa turno, día, bloqueo, horario y cupo. Si algo falla, lanza el código de error.
+function revisarTurno({ turnoDoc, bloqueoExiste, reservados, fecha }) {
+  if (!turnoDoc.exists) throw new Error("turno-no-existe");
+  const turno = turnoDoc.data();
+  if (turno["día"] !== nombreDelDia(fecha)) throw new Error("fecha-invalida");
+  if (bloqueoExiste) throw new Error("dia-bloqueado");
+  const inicio = new Date(`${fecha}T${turno.hora}:00-03:00`);
+  if (inicio.getTime() <= Date.now()) throw new Error("turno-pasado");
+  if (reservados >= turno.cupoMaximo) throw new Error("sin-lugar");
+  return turno;
+}
+
+async function enviarMail(para, asunto, html) {
+  const respuesta = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from: ESTUDIO.remitente, to: [para], subject: asunto, html }),
+  });
+  if (!respuesta.ok) {
+    console.error("Resend respondió con error:", await respuesta.text());
+  }
+  return respuesta.ok;
 }
 
 // ---------- Función principal ----------
@@ -118,6 +156,7 @@ export default async (req) => {
   const hoy = hoyUruguay();
   const emailNorm = normalizarEmail(datos.email);
   const telefonoNorm = normalizarTelefono(datos.telefono);
+  const origen = new URL(req.url).origin;
 
   try {
     // 2. Revisar la fecha
@@ -126,78 +165,124 @@ export default async (req) => {
       return responder(400, { ok: false, error: "fecha-invalida" });
     }
 
-    // 3. Límite por persona (por email y por teléfono)
-    const porEmail = await reservasActivas("emailNorm", emailNorm, hoy);
-    const porTelefono = await reservasActivas("telefonoNorm", telefonoNorm, hoy);
-    const todas = [...porEmail, ...porTelefono];
+    // 3. Límite por persona (reservas confirmadas + pendientes sin vencer)
+    const [resEmail, resTel, penEmail, penTel] = await Promise.all([
+      reservasActivas("emailNorm", emailNorm, hoy),
+      reservasActivas("telefonoNorm", telefonoNorm, hoy),
+      pendientesVigentes("emailNorm", emailNorm),
+      pendientesVigentes("telefonoNorm", telefonoNorm),
+    ]);
 
-    if (todas.some((r) => r.fecha === datos.fecha)) {
+    if ([...resEmail, ...resTel].some((r) => r.fecha === datos.fecha)) {
       return responder(429, { ok: false, error: "ya-reservaste-ese-dia" });
     }
-    if (Math.max(porEmail.length, porTelefono.length) >= MAX_RESERVAS_ACTIVAS) {
+    if ([...penEmail, ...penTel].some((p) => p.fecha === datos.fecha)) {
+      return responder(429, { ok: false, error: "confirmacion-pendiente" });
+    }
+    const porEmail = resEmail.length + penEmail.length;
+    const porTelefono = resTel.length + penTel.length;
+    if (Math.max(porEmail, porTelefono) >= MAX_RESERVAS_ACTIVAS) {
       return responder(429, { ok: false, error: "limite-reservas" });
     }
 
-    // 4. Transacción: revisar turno, bloqueo y cupo; guardar reserva y sumar cupo
     const turnoRef = db.collection("turnos").doc(datos.turnoId);
     const bloqueoRef = db.collection("bloqueos").doc(datos.fecha);
     const ocupacionRef = db.collection("ocupacion").doc(`${datos.fecha}_${datos.turnoId}`);
+    const ahora = new Date().toISOString();
+
+    const datosReserva = {
+      turnoId: datos.turnoId,
+      fecha: datos.fecha,
+      nombre: datos.nombre.trim(),
+      apellido: datos.apellido.trim(),
+      email: datos.email.trim(),
+      telefono: datos.telefono.trim(),
+      emailNorm,
+      telefonoNorm,
+      creado: ahora,
+      privacidadAceptada: ahora,
+    };
+
+    // ================= 4a. CON VERIFICACIÓN POR MAIL =================
+    if (VERIFICAR_EMAIL) {
+      const [turnoDoc, bloqueoDoc, ocupacionDoc] = await Promise.all([
+        turnoRef.get(), bloqueoRef.get(), ocupacionRef.get(),
+      ]);
+      const turno = revisarTurno({
+        turnoDoc,
+        bloqueoExiste: bloqueoDoc.exists,
+        reservados: ocupacionDoc.exists ? ocupacionDoc.data().reservados : 0,
+        fecha: datos.fecha,
+      });
+
+      // Código secreto e imposible de adivinar: es el id de la pendiente
+      const token = randomBytes(24).toString("hex");
+      const expira = new Date(Date.now() + MINUTOS_PARA_CONFIRMAR * 60000).toISOString();
+      const pendienteRef = db.collection("pendientes").doc(token);
+
+      await pendienteRef.set({ ...datosReserva, "día": turno["día"], hora: turno.hora, expira });
+
+      const fecha = fechaLarga(datos.fecha);
+      const linkConfirmar = `${origen}/confirmar.html?token=${token}`;
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; color: #2b2420;">
+          <h2 style="margin-bottom: 4px;">Confirmá tu reserva</h2>
+          <p>Hola ${escaparHTML(datosReserva.nombre)}, para guardar tu lugar en ${ESTUDIO.nombre} tocá el botón:</p>
+          <table style="margin: 16px 0; border-collapse: collapse;">
+            <tr><td style="padding: 4px 12px 4px 0; color: #6b5f57;">Día</td><td><strong>${fecha}</strong></td></tr>
+            <tr><td style="padding: 4px 12px 4px 0; color: #6b5f57;">Hora</td><td><strong>${escaparHTML(turno.hora)}</strong></td></tr>
+          </table>
+          <p style="margin: 24px 0;">
+            <a href="${linkConfirmar}" style="background: #7E3B23; color: #F6F2E8; padding: 12px 24px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+              Confirmar mi reserva
+            </a>
+          </p>
+          <p style="color: #6b5f57; font-size: 14px;">
+            Tenés ${MINUTOS_PARA_CONFIRMAR} minutos para confirmar. Hasta que no la confirmes, el lugar sigue libre.
+            Si no hiciste esta reserva, ignorá este mail.
+          </p>
+        </div>
+      `;
+
+      const enviado = await enviarMail(datosReserva.email, `Confirmá tu reserva: ${fecha} a las ${turno.hora}`, html);
+      if (!enviado) {
+        await pendienteRef.delete(); // sin mail no hay forma de confirmar: la borramos
+        return responder(502, { ok: false, error: "mail-no-enviado" });
+      }
+
+      return responder(200, { ok: true, estado: "pendiente" });
+    }
+
+    // ================= 4b. SIN VERIFICACIÓN: se reserva directo =================
     const reservaRef = db.collection("reservas").doc();
 
     const turno = await db.runTransaction(async (t) => {
       const [turnoDoc, bloqueoDoc, ocupacionDoc] = await Promise.all([
         t.get(turnoRef), t.get(bloqueoRef), t.get(ocupacionRef),
       ]);
-
-      if (!turnoDoc.exists) throw new Error("turno-no-existe");
-      const turno = turnoDoc.data();
-
-      // El turno tiene que ser de ese día de la semana
-      if (turno["día"] !== nombreDelDia(datos.fecha)) throw new Error("fecha-invalida");
-      if (bloqueoDoc.exists) throw new Error("dia-bloqueado");
-
-      // Si es hoy, la clase no puede haber empezado
-      const inicio = new Date(`${datos.fecha}T${turno.hora}:00-03:00`);
-      if (inicio.getTime() <= Date.now()) throw new Error("turno-pasado");
-
-      // El cupo se toma de la base de datos, no de lo que diga el navegador
       const reservados = ocupacionDoc.exists ? ocupacionDoc.data().reservados : 0;
-      if (reservados >= turno.cupoMaximo) throw new Error("sin-lugar");
+      const turno = revisarTurno({
+        turnoDoc, bloqueoExiste: bloqueoDoc.exists, reservados, fecha: datos.fecha,
+      });
 
       if (ocupacionDoc.exists) {
         t.update(ocupacionRef, { reservados: reservados + 1 });
       } else {
         t.set(ocupacionRef, { fecha: datos.fecha, turnoId: datos.turnoId, reservados: 1 });
       }
-
-      const ahora = new Date().toISOString();
-      t.set(reservaRef, {
-        turnoId: datos.turnoId,
-        fecha: datos.fecha,
-        "día": turno["día"],
-        hora: turno.hora,
-        nombre: datos.nombre.trim(),
-        apellido: datos.apellido.trim(),
-        email: datos.email.trim(),
-        telefono: datos.telefono.trim(),
-        emailNorm,
-        telefonoNorm,
-        creado: ahora,
-        privacidadAceptada: ahora,
-      });
-
+      t.set(reservaRef, { ...datosReserva, "día": turno["día"], hora: turno.hora });
       return turno;
     });
 
-    // 5. Mandar el mail de confirmación (si falla, la reserva igual quedó hecha)
+    // Mail de confirmación (si falla, la reserva igual quedó hecha)
     let mailEnviado = false;
     try {
       const fecha = fechaLarga(datos.fecha);
-      const linkCancelar = `${new URL(req.url).origin}/cancelar.html?id=${encodeURIComponent(reservaRef.id)}`;
+      const linkCancelar = `${origen}/cancelar.html?id=${encodeURIComponent(reservaRef.id)}`;
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 480px; color: #2b2420;">
           <h2 style="margin-bottom: 4px;">¡Tu clase está reservada!</h2>
-          <p>Hola ${escaparHTML(datos.nombre.trim())}, te esperamos en ${ESTUDIO.nombre}.</p>
+          <p>Hola ${escaparHTML(datosReserva.nombre)}, te esperamos en ${ESTUDIO.nombre}.</p>
           <table style="margin: 16px 0; border-collapse: collapse;">
             <tr><td style="padding: 4px 12px 4px 0; color: #6b5f57;">Día</td><td><strong>${fecha}</strong></td></tr>
             <tr><td style="padding: 4px 12px 4px 0; color: #6b5f57;">Hora</td><td><strong>${escaparHTML(turno.hora)}</strong></td></tr>
@@ -210,32 +295,15 @@ export default async (req) => {
           </p>
         </div>
       `;
-
-      const respuesta = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          from: ESTUDIO.remitente,
-          to: [datos.email.trim()],
-          subject: `Reserva confirmada: ${fecha} a las ${turno.hora}`,
-          html,
-        }),
-      });
-
-      if (respuesta.ok) {
-        mailEnviado = true;
+      mailEnviado = await enviarMail(datosReserva.email, `Reserva confirmada: ${fecha} a las ${turno.hora}`, html);
+      if (mailEnviado) {
         await reservaRef.update({ mailConfirmacion: new Date().toISOString() });
-      } else {
-        console.error("Resend respondió con error:", await respuesta.text());
       }
     } catch (errorMail) {
       console.error("No se pudo enviar el mail:", errorMail);
     }
 
-    return responder(200, { ok: true, reservaId: reservaRef.id, mailEnviado });
+    return responder(200, { ok: true, estado: "confirmada", reservaId: reservaRef.id, mailEnviado });
   } catch (error) {
     const conocidos = {
       "turno-no-existe": 404,
