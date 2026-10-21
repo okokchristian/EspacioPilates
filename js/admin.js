@@ -16,7 +16,8 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
-  runTransaction
+  runTransaction,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 const seccionLogin = document.getElementById("login");
@@ -36,12 +37,12 @@ function hoyClave() {
 
 // ---------- Mostrar login o panel según haya sesión ----------
 onAuthStateChanged(auth, async (usuario) => {
-  if (!usuario) {
+    if (!usuario) {
+    if (dejarDeEscuchar) dejarDeEscuchar();
     seccionLogin.hidden = false;
     seccionPanel.hidden = true;
     return;
   }
-
   // ¿Este usuario es administrador? (tiene un documento en "admins")
   const adminDoc = await getDoc(doc(db, "admins", usuario.uid));
   if (!adminDoc.exists()) {
@@ -52,29 +53,44 @@ onAuthStateChanged(auth, async (usuario) => {
 
   seccionLogin.hidden = true;
   seccionPanel.hidden = false;
-  document.getElementById("panel-usuario").textContent =
-    `Sesión iniciada como ${usuario.email}`;
+
+  // Si la administradora tiene un nombre cargado, saludamos con el nombre.
+  // Si no, mostramos el email como antes.
+  const nombreAdmin = adminDoc.data().nombre;
+  document.getElementById("panel-usuario").textContent = nombreAdmin
+    ? `Hola, ${nombreAdmin}`
+    : `Sesión iniciada como ${usuario.email}`;
 
   inputFecha.value = hoyClave();
   cargarReservas(inputFecha.value);
 
-    cargarBloqueos();
-    cargarHorarios();
+  cargarBloqueos();
+  cargarHorarios();
 });
 
-// ---------- Traer las reservas de una fecha ----------
-async function cargarReservas(fechaClave) {
+// ---------- Escuchar las reservas de una fecha (se actualiza sola) ----------
+let dejarDeEscuchar = null; // para cortar la escucha anterior al cambiar de día
+
+function cargarReservas(fechaClave) {
+  // Si estábamos escuchando otro día, cortamos esa escucha
+  if (dejarDeEscuchar) dejarDeEscuchar();
+
   contenido.textContent = "Cargando reservas...";
 
-  try {
-    const consulta = query(collection(db, "reservas"), where("fecha", "==", fechaClave));
-    const snapshot = await getDocs(consulta);
-    const reservas = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-    pintarReservas(reservas);
-  } catch (error) {
-    contenido.textContent = "No se pudieron cargar las reservas.";
-    console.error(error);
-  }
+  const consulta = query(collection(db, "reservas"), where("fecha", "==", fechaClave));
+
+  // onSnapshot avisa cada vez que se crea, cancela o cambia una reserva de ese día
+  dejarDeEscuchar = onSnapshot(
+    consulta,
+    (snapshot) => {
+      const reservas = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      pintarReservas(reservas);
+    },
+    (error) => {
+      contenido.textContent = "No se pudieron cargar las reservas.";
+      console.error(error);
+    }
+  );
 }
 
 // ---------- Mostrar las reservas agrupadas por horario ----------
@@ -164,7 +180,6 @@ async function cancelarReserva(reserva, boton) {
       }
     });
 
-    cargarReservas(inputFecha.value); // recargar la lista
   } catch (error) {
     alert("No se pudo cancelar la reserva. Intentá de nuevo.");
     console.error(error);
